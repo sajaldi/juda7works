@@ -1,0 +1,88 @@
+<!-- filepath: /C:/Django/SoftCoMJuda/Softcom/cmms/templates/cmms/vista_mensual.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vista Mensual</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .cuadrito-azul {
+            border: 1px solid #0000ff;
+            padding: 5px;
+            margin: 2px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Vista Mensual - {{ year }}/{{ month }}</h1>
+    <table id="vista-mensual">
+        <thead>
+            <tr>
+                <th>Sistema</th>
+                <th>Hoja de Ruta</th>
+                <th>Horario</th>
+                {% for week_num, start_date, end_date in semanas %}
+                    <th>Semana {{ week_num }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for sistema, hojas_de_ruta in ordenes_por_sistema.items %}
+                {% for hoja_de_ruta, data in hojas_de_ruta.items %}
+                    <tr>
+                        <td>{{ sistema }}</td>
+                        <td>{{ hoja_de_ruta }}</td>
+                        <td>{{ data.horario }}</td>
+                        {% for week_num, start_date, end_date in semanas %}
+                            <td id="cell-{{ sistema }}-{{ hoja_de_ruta }}-{{ week_num }}"></td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const nivelesPorSemana = {{ niveles_por_semana|safe }};
+            const sistemaColors = {};
+
+            function getRandomColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
+
+            for (const [key, value] of Object.entries(nivelesPorSemana)) {
+                const [sistema, hojaDeRuta, weekNum] = key.split(",");
+                if (!sistemaColors[sistema]) {
+                    sistemaColors[sistema] = getRandomColor();
+                }
+                const cellId = `cell-${sistema.trim()}-${hojaDeRuta.trim()}-${weekNum.trim()}`;
+                const cell = document.getElementById(cellId);
+                if (cell) {
+                    const div = document.createElement("div");
+                    div.className = "cuadrito-azul";
+                    div.style.backgroundColor = sistemaColors[sistema];
+                    div.textContent = value;
+                    cell.appendChild(div);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
