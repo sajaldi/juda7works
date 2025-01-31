@@ -18,6 +18,7 @@ class Marca(models.Model):
 class Frecuencia(models.Model):
     nombre = models.CharField(max_length=50)
     intervalo = models.IntegerField()
+    color = models.CharField(max_length=7, default='#007bff')
     def __str__(self):
         return self.nombre
 
