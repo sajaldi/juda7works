@@ -18,6 +18,12 @@ def vista_anual(request):
     # Obtener el año actual
     year = datetime.now().year
 
+    months = [
+        (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'), 
+        (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'), 
+        (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
+    ]
+
     # Crear una lista de semanas del año
     semanas = []
     start_date = datetime(year, 1, 1)
@@ -85,6 +91,7 @@ def vista_anual(request):
         'ordenes_por_sistema': ordenes_por_sistema,
         'niveles_por_semana': niveles_por_semana,
         'semana_actual': semana_actual,  # Pasar la semana actual al contexto
+        'months': months,  # Add months to context
     }
     return render(request, 'cmms/vista_anual.html', context)
 

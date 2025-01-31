@@ -44,6 +44,19 @@
         .error {
             color: red;
             margin: 10px 0;
+            padding: 10px;
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            border-radius: 4px;
+        }
+        .success {
+            color: green;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #dff0d8;
+            border: 1px solid #d6e9c6;
+            border-radius: 4px;
+            
         }
     </style>
 </head>
@@ -58,8 +71,22 @@
             </div>
             <button type="submit" class="button">Subir Archivo</button>
         </form>
+
+        {% if mensaje %}
+            <div class="success">
+                {{ mensaje }}
+            </div>
+        {% endif %}
+
+        {% if importados %}
+            <div class="success">
+                Se importaron {{ importados }} hojas de ruta exitosamente.
+            </div>
+        {% endif %}
+
         {% if errores %}
             <div class="error">
+                <h3>Errores encontrados:</h3>
                 <ul>
                     {% for error in errores %}
                         <li>{{ error }}</li>

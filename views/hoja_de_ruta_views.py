@@ -1,8 +1,12 @@
 # filepath: /C:/Django/SoftCoMJuda/Softcom/cmms/views/hoja_de_ruta_views.py
+from pyexpat.errors import messages
 from django.shortcuts import render
 from django.http import HttpResponse
 from openpyxl import Workbook, load_workbook
-from cmms.models import HojaDeRuta, Sistema
+from cmms.models import HojaDeRuta, HorarioPreestablecido, Sistema, Frecuencia
+
+
+
 def exportar_plantilla_hojaderuta(request):
     # Crear un libro de trabajo y una hoja
     wb = Workbook()
@@ -16,7 +20,7 @@ def exportar_plantilla_hojaderuta(request):
     # Obtener los datos del modelo HojaDeRuta
     hojas_de_ruta = HojaDeRuta.objects.all()
     for hoja in hojas_de_ruta:
-        intervalo_nombre = hoja.intervalo if hoja.intervalo else ''
+        intervalo_nombre = hoja.intervalo.nombre if hoja.intervalo else ''
         sistema_nombre = hoja.sistema.nombre if hoja.sistema else ''
         horario_nombre = hoja.horario.nombre if hoja.horario else ''
         ws.append([hoja.id, hoja.nombre, hoja.descripcion, intervalo_nombre, sistema_nombre, horario_nombre])
@@ -30,7 +34,6 @@ def exportar_plantilla_hojaderuta(request):
     return response
 
 
-
 def importar_plantilla_hojaderuta(request):
     if request.method == 'POST':
         uploaded_file = request.FILES['file']
@@ -38,72 +41,57 @@ def importar_plantilla_hojaderuta(request):
         ws = wb.active
 
         errores = []
+        importados = 0
 
         # Leer los datos del archivo Excel
         for row in ws.iter_rows(min_row=2, values_only=True):
-            hoja_id, nombre, descripcion, intervalo_nombre, sistema_nombre, horario_nombre = row
+            try:
+                hoja_id, nombre, descripcion, intervalo_nombre, sistema_nombre, horario_nombre = row
 
-            # Obtener o crear el intervalo
-            if intervalo_nombre:
-                intervalo, created = HojaDeRuta.intervalo.objects.get_or_create(nombre=intervalo_nombre)
-            else:
-                intervalo = None
+                # Obtener o crear el intervalo
+                if intervalo_nombre:
+                    intervalo, created = Frecuencia.objects.get_or_create(nombre=intervalo_nombre)
+                    if created:
+                        print(f"Nueva frecuencia creada: {intervalo_nombre}")
+                else:
+                    intervalo = None
 
-            # Obtener o crear el sistema
-            if sistema_nombre:
-                sistema, created = Sistema.objects.get_or_create(nombre=sistema_nombre)
-            else:
-                sistema = None
+                # Obtener o crear el sistema
+                if sistema_nombre:
+                    sistema, created = Sistema.objects.get_or_create(nombre=sistema_nombre)
+                    if created:
+                        print(f"Nuevo sistema creado: {sistema_nombre}")
+                else:
+                    sistema = None
 
-            # Obtener o crear el horario
-            if horario_nombre:
-                horario, created = HojaDeRuta.HorarioPreestablecido.objects.get_or_create(nombre=horario_nombre)
-            else:
-                horario = None
+                # Obtener o crear el horario
+                if horario_nombre:
+                    horario, created = HorarioPreestablecido.objects.get_or_create(nombre=horario_nombre)
+                    if created:
+                        print(f"Nuevo horario creado: {horario_nombre}")
+                else:
+                    horario = None
 
-            # Actualizar o crear la hoja de ruta
-            HojaDeRuta.objects.update_or_create(
-                id=hoja_id,
-                defaults={'nombre': nombre, 'descripcion': descripcion, 'intervalo': intervalo, 'sistema': sistema, 'horario': horario}
-            )
+                # Actualizar o crear la hoja de ruta
+                hoja, created = HojaDeRuta.objects.update_or_create(
+                    id=hoja_id,
+                    defaults={
+                        'nombre': nombre,
+                        'descripcion': descripcion,
+                        'intervalo': intervalo,
+                        'sistema': sistema,
+                        'horario': horario
+                    }
+                )
+                importados += 1
 
-        context = {
-            'errores': errores,
-        }
-        return render(request, 'cmms/importar_hojaderuta.html', context)
-
-    return render(request, 'cmms/importar_hojaderuta.html')
-    if request.method == 'POST':
-        uploaded_file = request.FILES['file']
-        wb = load_workbook(uploaded_file)
-        ws = wb.active
-
-        errores = []
-
-        # Leer los datos del archivo Excel
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            hoja_id, nombre, descripcion, intervalo, sistema_nombre, horario_nombre = row
-
-            # Obtener o crear el sistema
-            if sistema_nombre:
-                sistema, created = Sistema.objects.get_or_create(nombre=sistema_nombre)
-            else:
-                sistema = None
-
-            # Obtener o crear el horario
-            if horario_nombre:
-                horario, created = HojaDeRuta.horario.objects.get_or_create(nombre=horario_nombre)
-            else:
-                horario = None
-
-            # Actualizar o crear la hoja de ruta
-            HojaDeRuta.objects.update_or_create(
-                id=hoja_id,
-                defaults={'nombre': nombre, 'descripcion': descripcion, 'intervalo': intervalo, 'sistema': sistema, 'horario': horario}
-            )
+            except Exception as e:
+                errores.append(f"Error en la fila {row}: {str(e)}")
 
         context = {
             'errores': errores,
+            'importados': importados,
+            'mensaje': f'Se importaron {importados} hojas de ruta exitosamente.' if importados > 0 else None
         }
         return render(request, 'cmms/importar_hojaderuta.html', context)
 

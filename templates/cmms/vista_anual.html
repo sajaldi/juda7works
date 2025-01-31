@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Vista Anual</title>
+    <title>Vista Anual - {{ year }}</title>
     <style>
+        /* Base styles */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f9;
             margin: 0;
             padding: 20px;
         }
+
         h1 {
             text-align: center;
             color: #333;
         }
+
+        /* Table styles */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -20,15 +24,45 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             background-color: #fff;
         }
+
         th, td {
             border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
         }
+
         th {
             background-color: #f2f2f2;
             color: #333;
         }
+
+        /* Month container styles */
+        .month-container {
+            display: grid;
+            grid-template-columns: 150px 150px 150px 150px repeat(52, minmax(30px, 1fr));
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 100;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+
+        .month-spacer {
+            grid-column: span 4;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .month {
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            background-color: #e9ecef;
+            border-right: 1px solid #dee2e6;
+        }
+
+        /* Other styles remain the same */
         .cuadrito-azul {
             background-color: #add8e6;
             border: 1px solid #0000ff;
@@ -39,14 +73,16 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             cursor: pointer;
         }
+
         .droppable {
             border: 2px dashed #ccc;
         }
+
         .semana-actual {
-            background-color: #f0f8ff;  /* Color de fondo para la semana actual */
-            border: 2px solid #007bff;  /* Borde resaltado */
+            background-color: #f0f8ff;
+            border: 2px solid #007bff;
         }
-        /* Estilos para el modal */
+
         .modal {
             display: none;
             position: fixed;
@@ -59,6 +95,7 @@
             background-color: rgba(0, 0, 0, 0.4);
             padding-top: 60px;
         }
+
         .modal-content {
             background-color: #fefefe;
             margin: 5% auto;
@@ -69,22 +106,22 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .close {
             color: #aaa;
             float: right;
             font-size: 28px;
             font-weight: bold;
-        }
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
             cursor: pointer;
         }
     </style>
 </head>
 <body>
     <h1>Vista Anual - {{ year }}</h1>
+    <div class="month-container" id="month-container">
+        <div class="month-spacer"></div>
+    </div>
+    
     <table id="vista-anual">
         <thead>
             <tr>
@@ -93,7 +130,9 @@
                 <th>Hoja de Ruta</th>
                 <th>Horario</th>
                 {% for week_num, start_date, end_date in semanas %}
-                    <th class="{% if week_num == semana_actual %}semana-actual{% endif %}">Semana {{ week_num }}</th>
+                    <th class="{% if week_num == semana_actual %}semana-actual{% endif %}">
+                        Semana {{ week_num }}
+                    </th>
                 {% endfor %}
             </tr>
         </thead>
@@ -110,13 +149,6 @@
                                 <td id="cell-{{ sistema_principal }}-{{ sistema }}-{{ hoja_de_ruta }}-{{ week_num }}" 
                                     class="droppable {% if week_num == semana_actual %}semana-actual{% endif %}" 
                                     onclick="mostrarOrdenes('{{ sistema_principal }}', '{{ sistema }}', '{{ hoja_de_ruta }}', {{ week_num }})">
-                                    {% with key=sistema_principal|add:","|add:sistema|add:","|add:hoja_de_ruta|add:","|add:week_num %}
-                                        {% if key in niveles_por_semana %}
-                                            <div class="cuadrito-azul" style="background-color: {{ niveles_por_semana.key.color }};">
-                                                {{ niveles_por_semana.key.niveles }}
-                                            </div>
-                                        {% endif %}
-                                    {% endwith %}
                                 </td>
                             {% endfor %}
                         </tr>
@@ -126,7 +158,6 @@
         </tbody>
     </table>
 
-    <!-- Modal para mostrar las órdenes -->
     <div id="ordersModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
@@ -137,6 +168,33 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // Month configuration
+            const months = [
+                { name: 'Enero', weeks: 4 },
+                { name: 'Febrero', weeks: 4 },
+                { name: 'Marzo', weeks: 4 },
+                { name: 'Abril', weeks: 4 },
+                { name: 'Mayo', weeks: 5 },
+                { name: 'Junio', weeks: 4 },
+                { name: 'Julio', weeks: 4 },
+                { name: 'Agosto', weeks: 4 },
+                { name: 'Septiembre', weeks: 4 },
+                { name: 'Octubre', weeks: 4 },
+                { name: 'Noviembre', weeks: 4 },
+                { name: 'Diciembre', weeks: 5 }
+            ];
+
+            // Add months to container
+            const monthContainer = document.getElementById("month-container");
+            months.forEach(month => {
+                const monthElement = document.createElement("div");
+                monthElement.className = "month";
+                monthElement.style.gridColumn = `span ${month.weeks}`;
+                monthElement.textContent = month.name;
+                monthContainer.appendChild(monthElement);
+            });
+
+            // Handle orders
             const nivelesPorSemana = {{ niveles_por_semana|safe }};
             const sistemaColors = {};
 
@@ -149,6 +207,7 @@
                 return color;
             }
 
+            // Add orders to cells
             for (const [key, value] of Object.entries(nivelesPorSemana)) {
                 const [sistema_principal, sistema, hojaDeRuta, weekNum] = key.split(",");
                 if (!sistemaColors[sistema_principal]) {
@@ -159,14 +218,15 @@
                 if (cell) {
                     const div = document.createElement("div");
                     div.className = "cuadrito-azul";
-                    div.style.backgroundColor = value.color;  // Usar el color de la frecuencia
-                    div.textContent = value.niveles;  // Mostrar los niveles
+                    div.style.backgroundColor = value.color;
+                    div.textContent = value.niveles;
                     div.draggable = true;
                     div.addEventListener('dragstart', handleDragStart);
                     cell.appendChild(div);
                 }
             }
 
+            // Drag and drop functionality
             const droppables = document.querySelectorAll('.droppable');
             droppables.forEach(cell => {
                 cell.addEventListener('dragover', handleDragOver);
@@ -194,15 +254,11 @@
             }
         });
 
-        // Función para mostrar el modal con las órdenes
+        // Modal functionality
         function mostrarOrdenes(sistema_principal, sistema, hoja_de_ruta, semana) {
-            console.log("Parámetros enviados:", { sistema_principal, sistema, hoja_de_ruta, semana });
-
             fetch(`/cmms/obtener_ordenes/?sistema_principal=${sistema_principal}&sistema=${sistema}&hoja_de_ruta=${hoja_de_ruta}&semana=${semana}`)
                 .then(response => response.json())
                 .then(data => {
-                    console.log("Respuesta de la API:", data);  // Verificar la respuesta de la API
-
                     const modal = document.getElementById("ordersModal");
                     const ordersContent = document.getElementById("ordersContent");
 
@@ -224,18 +280,13 @@
 
                     modal.style.display = "block";
                 })
-                .catch(error => {
-                    console.error('Error al obtener las órdenes:', error);
-                });
+                .catch(error => console.error('Error:', error));
         }
 
-        // Función para cerrar el modal
         function cerrarModal() {
-            const modal = document.getElementById("ordersModal");
-            modal.style.display = "none";
+            document.getElementById("ordersModal").style.display = "none";
         }
 
-        // Cerrar el modal si se hace clic fuera de él
         window.onclick = function(event) {
             const modal = document.getElementById("ordersModal");
             if (event.target === modal) {
