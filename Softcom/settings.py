@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-6ksug4(r#8gm$$_y!uecg75srp71oant9uw1g)!h-^dgqt_j4k
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["tu-app.onrender.com"]
 
 
 # Application definition
@@ -40,6 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'cmms',
 ]
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

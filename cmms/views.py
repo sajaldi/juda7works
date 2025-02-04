@@ -4,7 +4,7 @@ from django.shortcuts import render
 from datetime import datetime, timedelta
 
 from openpyxl import Workbook, load_workbook
-from .models import OrdenDeTrabajo, Sistema
+from .models import HojaDeRuta, OrdenDeTrabajo, Sistema
 import logging
 
 # Configurar el logger
@@ -241,3 +241,46 @@ def plantilla_sistema(request):
         return render(request, 'cmms/plantilla_sistema.html', context)
 
     return render(request, 'cmms/plantilla_sistema.html')
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+import json
+@require_http_methods(["POST"])
+def mover_ordenes_semana(request):
+    try:
+        data = json.loads(request.body)
+        sistema_principal = data.get('sistema_principal')
+        sistema_nombre = data.get('sistema')
+        hoja_de_ruta_nombre = data.get('hoja_de_ruta')
+        old_week = data.get('old_week')
+        new_week = data.get('new_week')
+        year = datetime.now().year
+
+        # Calcular fechas de las semanas
+        start_date_old = datetime.strptime(f'{year}-W{old_week:02}-1', "%Y-W%W-%w").date()
+        start_date_new = datetime.strptime(f'{year}-W{new_week:02}-1', "%Y-W%W-%w").date()
+
+        # Obtener objetos de BD
+        sistema = Sistema.objects.get(principal__nombre=sistema_principal, nombre=sistema_nombre)
+        hoja_de_ruta = HojaDeRuta.objects.get(sistema=sistema, nombre=hoja_de_ruta_nombre)
+
+        # Obtener órdenes a actualizar
+        ordenes = OrdenDeTrabajo.objects.filter(
+            HojaDeRuta=hoja_de_ruta,
+            fechaDeInicio__year=year,
+            fechaDeInicio__week=old_week
+        )
+
+        # Actualizar fechas
+        for orden in ordenes:
+            delta_days = (orden.fechaDeInicio.date() - start_date_old).days
+            nueva_fecha_inicio = start_date_new + timedelta(days=delta_days)
+            orden.fechaDeInicio = nueva_fecha_inicio
+            if orden.fechaDeFin:
+                orden.fechaDeFin = nueva_fecha_inicio + (orden.fechaDeFin - orden.fechaDeInicio)
+            orden.save()
+
+        return JsonResponse({'status': 'success'})
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
