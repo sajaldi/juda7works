@@ -1,7 +1,7 @@
 # filepath: /C:/Django/SoftCoMJuda/Softcom/Dockerfile
 
 # Usa una imagen base oficial de Python
-FROM python:3.9-slim
+FROM python:3.10
 
 # Establece el directorio de trabajo en el contenedor
 WORKDIR /app
