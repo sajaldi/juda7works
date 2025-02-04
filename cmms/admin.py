@@ -10,6 +10,16 @@ from .admin.modelos.frecuencia_admin import FrecuenciaAdmin
 
 
 
+@admin.register(Frecuencia)
+class FrecuenciaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'intervalo', 'color')  # Incluye 'intervalo'
+    list_editable = ('intervalo', )                 # Define 'intervalo' como editable
+    search_fields = ('nombre', )          
+
+
+
+
+
 
 
 

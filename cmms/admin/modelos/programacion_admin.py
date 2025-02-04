@@ -133,8 +133,9 @@ eliminar_ordenes.short_description = "Eliminar órdenes de trabajo"
 
 @admin.register(Programacion)
 class ProgramacionAdmin(admin.ModelAdmin):
-    list_display=('nombre',)
-    autocomplete_fields = ['activos']  # Campo relacionado a Activo con búsqueda y paginación
+    list_display = ('nombre', 'fechaDeInicio', 'programado')
+    list_editable = ('fechaDeInicio',)
+    list_filter = ('programado', 'fechaDeInicio')
+    search_fields = ('nombre', 'fechaDeInicio')
+    autocomplete_fields = ['activos']
     actions = [generar_ordenes, eliminar_ordenes]
-    
-   
