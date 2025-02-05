@@ -9,8 +9,7 @@ class AreasInline(admin.TabularInline):
     fields= ('nombre','principal')
 @admin.register(Area)
 class AreaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'principal','orden') 
-    list_editable = ('orden',) 
+    list_display = ('nombre', 'principal',) 
     list_filter = ('principal',)
     search_fields = ('nombre',)  # Muestra el nombre y principal en la lista
     inlines = [AreasInline]

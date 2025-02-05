@@ -51,12 +51,14 @@ class HojaDeRutaAdmin(admin.ModelAdmin):
     list_filter = (SistemaPrincipalFilter, 'intervalo', 'sistema', 'horario')
     ordering = ('nombre',)
     inlines = [PasosHojaDeRutaInline]
-    readonly_fields = ('total_duracion_en_minutos', 'total_duracion_en_horas')
+    readonly_fields = ('total_duracion_en_minutos', 'total_duracion_en_horas',)
     def total_duracion_en_minutos(self, obj):
         if obj.horario:
             return obj.horario.total_duracion_en_minutos
         return None
     total_duracion_en_minutos.short_description = 'Total Duración en Minutos'
+
+
 
     def total_duracion_en_horas(self, obj):
         if obj.horario:

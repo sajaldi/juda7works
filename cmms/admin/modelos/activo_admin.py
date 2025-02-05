@@ -3,9 +3,9 @@ from django.contrib import admin
 from django.urls import path
 from django.utils.html import format_html
 
-from ...models import Activo
+from ...models import Activo, Categoria, Marca, Modelo
 
-from ..acciones import importar_activos_view
+from ...acciones import importar_activos_view
 
 @admin.register(Activo)
 class ActivoAdmin(admin.ModelAdmin):
@@ -32,4 +32,21 @@ class ActivoAdmin(admin.ModelAdmin):
             path("importar-activos/", self.admin_site.admin_view(importar_activos_view), name="importar-activos"),
         ]
         return custom_urls + urls
+
+@admin.register(Marca)
+class MarcaAdmin(admin.ModelAdmin):
+    list_display = ('nombre',)
+    search_fields = ('nombre',)
+
+
+@admin.register(Modelo)
+class ModeloAdmin(admin.ModelAdmin):
+    list_display = ('nombre',)
+    search_fields = ('nombre',) 
+
+@admin.register(Categoria)
+class CategoriaAdmin(admin.ModelAdmin):
+    list_display = ('nombre',)
+    search_fields = ('nombre',)
+
 

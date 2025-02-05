@@ -201,7 +201,7 @@ class OrdenDeTrabajo(models.Model):
     HojaDeRuta =models.ForeignKey(HojaDeRuta, on_delete=models.CASCADE, null=True, blank=True)
     fechaDeInicio = models.DateTimeField(null=True, blank=True)
     fechaDeFin = models.DateTimeField(null=True, blank=True)
-
+    Activo = models.ForeignKey(Activo, on_delete=models.CASCADE, null=True, blank=True)
     programacion =models.ForeignKey("cmms.Programacion", verbose_name=("programacion"), on_delete=models.CASCADE, null=True)
     area = models.ForeignKey(Area,on_delete=models.CASCADE,null=True)
     def __str__(self):

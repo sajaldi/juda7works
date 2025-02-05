@@ -4,7 +4,7 @@ from django.shortcuts import render
 from datetime import datetime, timedelta
 
 from openpyxl import Workbook, load_workbook
-from .models import HojaDeRuta, OrdenDeTrabajo, Sistema
+from .models import Activo, HojaDeRuta, OrdenDeTrabajo, Sistema, Area
 import logging
 
 # Configurar el logger
@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 from datetime import datetime, timedelta
+
+def get_activos_por_categoria(request):
+    categoria_id = request.GET.get("categoria_id")
+    activos = Activo.objects.filter(modelo__categoria_id=categoria_id).values("id", "nombre")
+    return JsonResponse({"activos": list(activos)})
 
 
 def vista_anual(request):
@@ -77,7 +82,8 @@ def vista_anual(request):
             for hoja_de_ruta, data in hojas_de_ruta.items():
                 for week_num, ordenes in data['semanas'].items():
                     if ordenes:
-                        niveles = [orden.area.nombre for orden in ordenes]
+                        # Aquí comprobamos si `orden.area` existe antes de acceder a `nombre`
+                        niveles = [orden.area.nombre if orden.area else "Área no definida" for orden in ordenes]
                         key = f"{sistema_principal},{sistema},{hoja_de_ruta},{week_num}"
                         niveles_por_semana[key] = {
                             'niveles': f"{niveles[0]}-{niveles[-1]}",
@@ -94,6 +100,7 @@ def vista_anual(request):
         'months': months,  # Add months to context
     }
     return render(request, 'cmms/vista_anual.html', context)
+
 
 def obtener_ordenes(request):
     sistema_principal = request.GET.get('sistema_principal')
@@ -181,30 +188,6 @@ def vista_mensual(request, fecha_inicio):
     }
     return render(request, 'cmms/vista_mensual.html', context)
 
-def exportar_plantilla_sistema(request):
-    # Crear un libro de trabajo y una hoja
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Plantilla de Importación de Sistema"
-
-    # Agregar encabezados
-    headers = ["ID", "Nombre", "Principal"]
-    ws.append(headers)
-
-    # Obtener los datos del modelo Sistema
-    sistemas = Sistema.objects.all()
-    for sistema in sistemas:
-        principal_nombre = sistema.principal.nombre if sistema.principal else ''
-        ws.append([sistema.id, sistema.nombre, principal_nombre])
-
-    # Configurar la respuesta HTTP
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=plantilla_importacion_sistema.xlsx'
-
-    # Guardar el libro de trabajo en la respuesta
-    wb.save(response)
-    return response
-
 def plantilla_sistema(request):
     if request.method == 'POST':
         uploaded_file = request.FILES['file']
@@ -285,3 +268,24 @@ def mover_ordenes_semana(request):
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
+    
+
+    
+def vista_activos(request):
+  # Obtener todas las órdenes de trabajo (puedes aplicar otros filtros si es necesario)
+    ordenes = OrdenDeTrabajo.objects.all().select_related('Activo', 'HojaDeRuta', 'area')
+    
+    # Agrupar órdenes por activo (solo se incluyen órdenes con activo asignado)
+    ordenes_por_activo = {}
+    for orden in ordenes:
+        if orden.Activo:  # Solo consideramos órdenes con un activo asignado
+            activo = orden.Activo
+            if activo not in ordenes_por_activo:
+                ordenes_por_activo[activo] = []
+            ordenes_por_activo[activo].append(orden)
+    
+    context = {
+        'ordenes_por_activo': ordenes_por_activo,
+        'year': datetime.now().year,
+    }
+    return render(request, 'cmms/vista_activos.html', context)
