@@ -2,7 +2,9 @@ import csv
 import datetime
 from django.http import HttpResponse
 from django.shortcuts import render
-from models import Activo
+from models import Activo, OrdenDeTrabajo
+from datetime import datetime, timedelta
+
 
    # Asegúrate de importar tu modelo
 
@@ -26,4 +28,3 @@ def exportar_plantilla_activos(request):
         writer.writerow([activo.id, activo.nombre, activo.marca.nombre if activo.marca else "", activo.no_inventario, activo.modelo.nombre if activo.modelo else ""])
 
     return response
-

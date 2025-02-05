@@ -1,0 +1,106 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="container">
+    <nav class="menu">
+        <ul>
+            <li>
+                <a href="{% url 'importar_pasos' %}">
+                    📥 Importar Pasos de Hoja de Ruta
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'exportar_pasos' %}">
+                    📄 Exportar Pasos de Hojas de Ruta
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'vista_activos' %}">
+                    📥 Vista por activos
+                </a>
+            </li>
+
+            <li>
+                <a href="/admin/cmms/hojaderuta/">
+                    📥 Hojas de Ruta
+                </a>
+            </li>
+        </ul>
+
+        <ul>
+            <li>
+                <a href="{% url 'vista_anual' %}">
+                    📥 Plantilla Anual
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'exportar_plantilla_hojaderuta' %}">
+                    📥 Plantilla de Hojas de Ruta
+                </a>
+            </li>
+        </ul>
+
+        <ul>
+            <li>
+                <a href="/admin/cmms/activo">
+                    📥 Listado de Activos
+                </a>
+            </li>
+        </ul>
+
+
+    </nav>
+
+    <div class="content">
+        {% block page_content %}{% endblock %}
+    </div>
+</div>
+
+<style>
+    /* Estilos para el contenedor del menú */
+    .menu {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    /* Hacemos que la lista se muestre como un contenedor flexible */
+    .menu ul {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 20px 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    /* Cada elemento de la lista se comporta como una tarjeta */
+    .menu li {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        width: 200px;         /* Ancho fijo para crear un bloque cuadrado o rectangular */
+        text-align: center;
+        box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* El enlace ocupa todo el bloque y se centra */
+    .menu li a {
+        display: block;
+        padding: 15px;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: bold;
+        color: #007bff;
+        transition: background 0.3s, color 0.3s;
+    }
+
+    /* Efecto hover para el enlace */
+    .menu li a:hover {
+        background-color: #007bff;
+        color: #fff;
+    }
+</style>
+{% endblock %}

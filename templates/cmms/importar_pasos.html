@@ -1,0 +1,33 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>📥 Importar Pasos de Hoja de Ruta</h1>
+    <p>Seleccione un archivo Excel (.xlsx) para importar los pasos.</p>
+    
+    <form method="post" enctype="multipart/form-data" action="{% url 'importar_pasos' %}">
+        {% csrf_token %}
+        
+        <div>
+            <label for="archivo">📂 Seleccionar archivo:</label>
+            <input type="file" name="archivo" id="archivo" accept=".xlsx" required>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <button type="submit" class="button">📤 Subir Archivo</button>
+        </div>
+    </form>
+
+    <div style="margin-top: 20px;">
+        <a href="{% url 'exportar_pasos' %}" class="button">📄 Descargar Datos en Excel</a>
+    </div>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endblock %}

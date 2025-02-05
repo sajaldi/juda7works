@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Órdenes de Trabajo por Semana</title>
     <style>
-        /* Estilos */
+        /* (Tus estilos actuales) */
         * {
             margin: 0;
             padding: 0;
@@ -90,7 +90,12 @@
                 <tr>
                     <th>Hoja de Ruta</th>
                     {% for semana in semanas %}
-                        <th>Sem {{ semana }}</th>
+                        <th>
+                            <!-- Enlace que envía el número de semana a la vista de fechas -->
+                            <a href="{% url 'ordenes_por_fecha' semana %}" style="color: white; text-decoration: none;">
+                                Sem {{ semana }}
+                            </a>
+                        </th>
                     {% endfor %}
                 </tr>
             </thead>
@@ -104,8 +109,6 @@
                                 {% for activo in activos %}
                                     <span class="activo">{{ activo }}</span><br>
                                 {% endfor %}
-                            {% else %}
-                                <!-- No se muestra nada si no hay activos -->
                             {% endif %}
                         </td>
                     {% endfor %}

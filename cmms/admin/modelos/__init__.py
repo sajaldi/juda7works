@@ -9,3 +9,6 @@ from .modelos_genericos_admin import*
 from .plan_de_mantenimiento_admin import*
 from .sistema_admin import*
 from .ordenes_admin import*
+from .frecuencia_admin import*
+from .pasos_hoja_de_ruta_admin import*
+

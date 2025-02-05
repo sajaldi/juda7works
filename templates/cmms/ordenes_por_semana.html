@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Órdenes de Trabajo por Semana</title>
+    <style>
+        /* (Tus estilos actuales) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td:first-child {
+            font-weight: bold;
+            background-color: #f4f4f4;
+            text-align: left;
+        }
+
+        .activo {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            padding: 5px;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Órdenes de Trabajo por Semana</h2>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Hoja de Ruta</th>
+                    {% for semana in semanas %}
+                        <th>
+                            <!-- Enlace que envía el número de semana a la vista de fechas -->
+                            <a href="{% url 'ordenes_por_fecha' semana %}" style="color: white; text-decoration: none;">
+                                Sem {{ semana }}
+                            </a>
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for hoja, semanas_data in hoja_ruta_por_semana.items %}
+                <tr>
+                    <td>{{ hoja }}</td>
+                    {% for activos in semanas_data %}
+                        <td>
+                            {% if activos %}
+                                {% for activo in activos %}
+                                    <span class="activo">{{ activo }}</span><br>
+                                {% endfor %}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

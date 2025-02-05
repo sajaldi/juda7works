@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Órdenes de Trabajo por Día</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            font-size: 14px;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        td:first-child {
+            font-weight: bold;
+            background-color: #f4f4f4;
+            text-align: left;
+        }
+        .activo {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            padding: 5px;
+            display: inline-block;
+            margin: 2px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Órdenes de Trabajo por Día</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Día</th>
+                <th>Activos</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dia in dias_semana %}
+            <tr>
+                <td>{{ dia|date:"l, d M Y" }}</td>
+                <td>
+                    {% if activos_por_dia|default:{}|dictsort:dia %}
+                        {% for activo in activos_por_dia|default:{}|dictsort:dia %}
+                            <span class="activo">{{ activo }}</span>
+                        {% endfor %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
