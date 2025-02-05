@@ -70,7 +70,7 @@ class Area(models.Model):
     nombre = models.CharField(max_length=100)
     principal = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='children')
     identificador = models.CharField(max_length=100, null=True, blank=True)
-    orden = models.IntegerField(null=True)
+    
     def __str__(self):
            return f"{self.principal} {self.nombre}" if self.principal else self.nombre
     
