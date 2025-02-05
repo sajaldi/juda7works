@@ -271,21 +271,47 @@ def mover_ordenes_semana(request):
     
 
     
+from datetime import datetime
+from django.shortcuts import render
+from .models import OrdenDeTrabajo
+
 def vista_activos(request):
-  # Obtener todas las órdenes de trabajo (puedes aplicar otros filtros si es necesario)
-    ordenes = OrdenDeTrabajo.objects.all().select_related('Activo', 'HojaDeRuta', 'area')
-    
-    # Agrupar órdenes por activo (solo se incluyen órdenes con activo asignado)
-    ordenes_por_activo = {}
+    # Obtener el año actual
+    year = datetime.now().year
+
+    # Crear la lista de semanas del año
+    semanas = list(range(1, 53))
+
+    # Obtener todas las órdenes de trabajo del año
+    ordenes = OrdenDeTrabajo.objects.filter(fechaDeInicio__year=year)
+
+    # Estructura de datos para organizar órdenes
+    hoja_ruta_por_semana = {}
+
     for orden in ordenes:
-        if orden.Activo:  # Solo consideramos órdenes con un activo asignado
-            activo = orden.Activo
-            if activo not in ordenes_por_activo:
-                ordenes_por_activo[activo] = []
-            ordenes_por_activo[activo].append(orden)
-    
+        hoja_ruta = orden.HojaDeRuta.nombre
+        activo = orden.Activo.nombre if orden.Activo else None  # Solo asignamos el activo si existe
+
+        # Solo agregar la orden si tiene un activo
+        if activo:
+            # Calcular la semana de la orden
+            semana_orden = orden.fechaDeInicio.isocalendar()[1]  # Obtiene el número de la semana
+
+            # Inicializar la estructura si no existe
+            if hoja_ruta not in hoja_ruta_por_semana:
+                hoja_ruta_por_semana[hoja_ruta] = {semana: set() for semana in semanas}
+
+            # Agregar el activo a la semana correspondiente (solo si no está ya presente)
+            hoja_ruta_por_semana[hoja_ruta][semana_orden].add(activo)
+
+    # Convertir a formato más accesible para el template
+    semanas_data = {}
+    for hoja_ruta, semanas_info in hoja_ruta_por_semana.items():
+        semanas_data[hoja_ruta] = [list(semanas_info.get(semana, [])) for semana in semanas]
+
     context = {
-        'ordenes_por_activo': ordenes_por_activo,
-        'year': datetime.now().year,
+        'semanas': semanas,
+        'hoja_ruta_por_semana': semanas_data
     }
+
     return render(request, 'cmms/vista_activos.html', context)

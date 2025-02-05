@@ -1,88 +1,119 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Vista de Órdenes por Activo - {{ year }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Órdenes de Trabajo por Semana</title>
     <style>
-        /* Estilos base */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+        /* Estilos */
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
             padding: 20px;
         }
-        h1, h2 {
+
+        h2 {
             text-align: center;
+            margin-bottom: 20px;
             color: #333;
         }
-        /* Tabla */
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            background-color: #fff;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: center;
+            font-size: 14px;
         }
+
         th {
-            background-color: #f2f2f2;
-            color: #333;
+            background-color: #007bff;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
-        /* Separa cada grupo (activo) */
-        .activo-header {
-            background-color: #c8e6c9;
-            color: #388e3c;
-            padding: 10px;
-            margin-top: 30px;
-            border-radius: 4px;
+
+        td:first-child {
+            font-weight: bold;
+            background-color: #f4f4f4;
+            text-align: left;
+        }
+
+        .activo {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            padding: 5px;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 5px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Vista de Órdenes por Activo - {{ year }}</h1>
-    
-    {% if ordenes_por_activo %}
-        {% for activo, ordenes in ordenes_por_activo.items %}
-            <div class="activo-header">
-                <h2>Activo: {{ activo.nombre }} | No. Inventario: {{ activo.no_inventario }}</h2>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nombre Orden</th>
-                        <th>Sistema</th>
-                        <th>Hoja de Ruta</th>
-                        <th>Fecha de Inicio</th>
-                        <th>Fecha de Fin</th>
-                        <th>Área</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for orden in ordenes %}
-                        <tr>
-                            <td>{{ orden.nombre }}</td>
-                            <td>{{ orden.HojaDeRuta.sistema }}</td>
-                            <td>{{ orden.HojaDeRuta.nombre }}</td>
-                            <td>{{ orden.fechaDeInicio|date:"d/m/Y H:i" }}</td>
-                            <td>{{ orden.fechaDeFin|date:"d/m/Y H:i" }}</td>
-                            <td>
-                                {% if orden.area %}
-                                    {{ orden.area.nombre }}
-                                {% else %}
-                                    Sin área
-                                {% endif %}
-                            </td>
-                        </tr>
+
+    <h2>Órdenes de Trabajo por Semana</h2>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Hoja de Ruta</th>
+                    {% for semana in semanas %}
+                        <th>Sem {{ semana }}</th>
                     {% endfor %}
-                </tbody>
-            </table>
-        {% endfor %}
-    {% else %}
-        <p>No hay órdenes de trabajo disponibles.</p>
-    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for hoja, semanas_data in hoja_ruta_por_semana.items %}
+                <tr>
+                    <td>{{ hoja }}</td>
+                    {% for activos in semanas_data %}
+                        <td>
+                            {% if activos %}
+                                {% for activo in activos %}
+                                    <span class="activo">{{ activo }}</span><br>
+                                {% endfor %}
+                            {% else %}
+                                <!-- No se muestra nada si no hay activos -->
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
 </body>
 </html>
