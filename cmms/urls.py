@@ -1,6 +1,8 @@
 # filepath: /C:/Django/SoftCoMJuda/Softcom/cmms/urls.py
 from django.urls import path
 
+from cmms.admin.modelos.sistema_admin import importar_sistemas_excel
+
 
  
 from .acciones import exportar_plantilla_activos, exportar_plantilla_pasos, importar_activos_view
@@ -24,5 +26,7 @@ urlpatterns = [
     path("importar_pasos/", importar_pasos_hoja_de_ruta, name="importar_pasos"),
     path('menu', menu, name='cmms_menu'),  # Asocia la vista a la URL
     path('ordenes/semana/<int:semana>/', ordenes_por_fecha, name='ordenes_por_fecha'),
+    path('importar_sistemas/', importar_sistemas_excel, name='importar_sistemas'),
+
 
 ]

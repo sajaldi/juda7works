@@ -5,15 +5,29 @@
     <style>
         /* Base styles */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(to right, #e0eafc, #cfdef3);
             margin: 0;
             padding: 20px;
+            color: #333;
         }
 
         h1 {
             text-align: center;
-            color: #333;
+            color: #222;
+            margin-bottom: 20px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Table styles */
@@ -21,19 +35,32 @@
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 1.2s ease-out;
         }
 
         th, td {
             border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
+            transition: background-color 0.3s ease, transform 0.3s ease;
         }
 
         th {
             background-color: #f2f2f2;
-            color: #333;
+            color: #444;
+            font-weight: 600;
+        }
+
+        tr:hover td {
+            background-color: #f9f9f9;
+            transform: scale(1.01);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         /* Month container styles */
@@ -46,6 +73,12 @@
             z-index: 100;
             border-bottom: 1px solid #dee2e6;
             margin-bottom: 20px;
+            animation: slideDown 1s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .month-spacer {
@@ -60,22 +93,42 @@
             font-weight: bold;
             background-color: #e9ecef;
             border-right: 1px solid #dee2e6;
+            transition: background-color 0.3s ease;
         }
 
-        /* Other styles remain the same */
+        .month:hover {
+            background-color: #dfe7f1;
+        }
+
+        /* Order box (cuadrito) styles */
         .cuadrito-azul {
             background-color: #add8e6;
-            border: 1px solid #0000ff;
+            border: 1px solid #007bff;
             padding: 5px;
             margin: 2px;
             display: inline-block;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
             cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
+        .cuadrito-azul:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Droppable cell styles */
         .droppable {
             border: 2px dashed #ccc;
+            min-height: 50px;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+
+        .droppable.over {
+            background-color: #e3f2fd;
+            border-color: #64b5f6;
         }
 
         .semana-actual {
@@ -83,28 +136,39 @@
             border: 2px solid #007bff;
         }
 
+        /* Modal styles with animations */
         .modal {
             display: none;
             position: fixed;
-            z-index: 1;
+            z-index: 200;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
-            padding-top: 60px;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeInModal 0.5s ease;
+        }
+
+        @keyframes fadeInModal {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
+            background-color: #fff;
+            margin: 10% auto;
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
             max-width: 600px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            animation: zoomIn 0.4s ease;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         .close {
@@ -113,6 +177,11 @@
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #000;
         }
     </style>
 </head>
@@ -158,6 +227,7 @@
         </tbody>
     </table>
 
+    <!-- Modal para mostrar órdenes -->
     <div id="ordersModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
@@ -168,7 +238,7 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Month configuration
+            // Configuración de meses
             const months = [
                 { name: 'Enero', weeks: 4 },
                 { name: 'Febrero', weeks: 4 },
@@ -184,7 +254,7 @@
                 { name: 'Diciembre', weeks: 5 }
             ];
 
-            // Add months to container
+            // Agregar meses al contenedor dinámicamente
             const monthContainer = document.getElementById("month-container");
             months.forEach(month => {
                 const monthElement = document.createElement("div");
@@ -194,7 +264,7 @@
                 monthContainer.appendChild(monthElement);
             });
 
-            // Handle orders
+            // Manejo de órdenes
             const nivelesPorSemana = {{ niveles_por_semana|safe }};
             const sistemaColors = {};
 
@@ -207,7 +277,7 @@
                 return color;
             }
 
-            // Add orders to cells
+            // Agregar órdenes a las celdas
             for (const [key, value] of Object.entries(nivelesPorSemana)) {
                 const [sistema_principal, sistema, hojaDeRuta, weekNum] = key.split(",");
                 if (!sistemaColors[sistema_principal]) {
@@ -218,7 +288,7 @@
                 if (cell) {
                     const div = document.createElement("div");
                     div.className = "cuadrito-azul";
-                    div.style.backgroundColor = value.color;
+                    div.style.backgroundColor = value.color || sistemaColors[sistema_principal];
                     div.textContent = value.niveles;
                     div.draggable = true;
                     div.addEventListener('dragstart', handleDragStart);
@@ -226,11 +296,14 @@
                 }
             }
 
-            // Drag and drop functionality
+            // Funcionalidad Drag & Drop
             const droppables = document.querySelectorAll('.droppable');
             droppables.forEach(cell => {
                 cell.addEventListener('dragover', handleDragOver);
                 cell.addEventListener('drop', handleDrop);
+                cell.addEventListener('dragleave', () => {
+                    cell.classList.remove('over');
+                });
             });
 
             function handleDragStart(e) {
@@ -241,20 +314,22 @@
             function handleDragOver(e) {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
+                e.currentTarget.classList.add('over');
             }
 
             function handleDrop(e) {
                 e.preventDefault();
                 const id = e.dataTransfer.getData('text/plain');
                 const draggableElement = document.getElementById(id);
-                const dropzone = e.target;
+                const dropzone = e.currentTarget;
                 if (dropzone.classList.contains('droppable')) {
                     dropzone.appendChild(draggableElement);
                 }
+                dropzone.classList.remove('over');
             }
         });
 
-        // Modal functionality
+        // Funcionalidad del Modal
         function mostrarOrdenes(sistema_principal, sistema, hoja_de_ruta, semana) {
             fetch(`/cmms/obtener_ordenes/?sistema_principal=${sistema_principal}&sistema=${sistema}&hoja_de_ruta=${hoja_de_ruta}&semana=${semana}`)
                 .then(response => response.json())
@@ -265,7 +340,7 @@
                     if (data.ordenes.length > 0) {
                         let html = '<ul>';
                         data.ordenes.forEach(orden => {
-                            html += `<li>
+                            html += `<li style="margin-bottom: 10px;">
                                 <strong>${orden.nombre}</strong><br>
                                 Fecha de inicio: ${orden.fechaDeInicio}<br>
                                 Fecha de fin: ${orden.fechaDeFin}<br>

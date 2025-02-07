@@ -60,7 +60,7 @@ def vista_anual(request):
         hoja_de_ruta = orden.HojaDeRuta.nombre
         # Obtener el horario de la programación en lugar de la hoja de ruta
         programacion = orden.programacion  # Asumiendo que existe una relación 'programacion' en OrdenDeTrabajo
-        horario = programacion.horario if programacion else None # Obtener horario de programacion
+        horario = orden.horario if programacion else None # Obtener horario de programacion
         color = orden.HojaDeRuta.intervalo.color
 
         if sistema_principal not in ordenes_por_sistema:
@@ -161,7 +161,7 @@ def vista_mensual(request, fecha_inicio):
     for orden in ordenes:
         sistema = orden.HojaDeRuta.sistema
         hoja_de_ruta = orden.HojaDeRuta.nombre
-        horario = orden.HojaDeRuta.horario
+        horario = orden.horario
         if sistema not in ordenes_por_sistema:
             ordenes_por_sistema[sistema] = {}
         if hoja_de_ruta not in ordenes_por_sistema[sistema]:
@@ -405,16 +405,16 @@ def importar_pasos_hoja_de_ruta(request):
         for i, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):  # Saltamos encabezados
             print(f"Fila {i}: {row}")  # 🔍 Depuración: ver qué datos está leyendo
 
-            # Validar que la fila tenga exactamente 3 columnas
+            # Validar que la fila tenga exactamente 4 columnas (ahora incluye ID)
             if row is None or len(row) != 4:
-                errores.append(f"Fila {i}: Número incorrecto de columnas ({len(row) if row else 0}). Se esperaban 3.")
+                errores.append(f"Fila {i}: Número incorrecto de columnas ({len(row) if row else 0}). Se esperaban 4 (ID, Paso, Tiempo, Hoja de Ruta).")
                 continue
-            
-            _, paso_nombre, tiempo, hoja_de_ruta_nombre = row
 
-            # Validar que los valores no sean None
-            if any(cell is None for cell in row):
-                errores.append(f"Fila {i}: Hay celdas vacías en la fila.")
+            paso_id, paso_nombre, tiempo, hoja_de_ruta_nombre = row
+
+            # Validar que los valores Paso Nombre, Tiempo y Hoja de Ruta Nombre no sean None
+            if paso_nombre is None or tiempo is None or hoja_de_ruta_nombre is None:
+                errores.append(f"Fila {i}: Hay celdas vacías en la fila (Paso, Tiempo, Hoja de Ruta Nombre).")
                 continue
 
             # Validar que el tiempo sea numérico
@@ -428,26 +428,34 @@ def importar_pasos_hoja_de_ruta(request):
                 errores.append(f"Fila {i}: La hoja de ruta '{hoja_de_ruta_nombre}' no existe.")
                 continue
 
-            # Crear y guardar el paso
+            # Intentar actualizar o crear el paso basado en el ID
             try:
-                PasosHojaDeRuta.objects.create(
-                    paso=paso_nombre,
-                    tiempo=tiempo,
-                    hojaderuta=hoja
+                paso_obj, created = PasosHojaDeRuta.objects.update_or_create(
+                    id=paso_id, # Usamos el ID del archivo para buscar o crear
+                    defaults={ # Campos a actualizar o crear si no existe
+                        'paso': paso_nombre,
+                        'tiempo': tiempo,
+                        'hojaderuta': hoja
+                    }
                 )
+                if created:
+                    print(f"Fila {i}: Paso con ID '{paso_id}' creado.")
+                else:
+                    print(f"Fila {i}: Paso con ID '{paso_id}' actualizado.")
+
+
             except Exception as e:
-                errores.append(f"Fila {i}: Error al guardar en la base de datos ({str(e)}).")
-        
+                errores.append(f"Fila {i}: Error al guardar/actualizar en la base de datos para ID '{paso_id}' ({str(e)}).")
+
         # Mostrar mensajes al usuario
         if errores:
             messages.error(request, "Errores en la importación:\n" + "\n".join(errores))
         else:
             messages.success(request, "Importación exitosa.")
-        
-        return redirect("importar_pasos")  # Ajusta según tu vista de redirección
-    
-    return render(request, "cmms/importar_pasos.html")
 
+        return redirect("importar_pasos")  # Ajusta según tu vista de redirección
+
+    return render(request, "cmms/importar_pasos.html")
 
 
 

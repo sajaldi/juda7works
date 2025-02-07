@@ -46,7 +46,7 @@ class HojaDeRutaInline(admin.TabularInline):
     extra =1
 @admin.register(HojaDeRuta)
 class HojaDeRutaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'descripcion','intervalo','sistema',)
+    list_display = ('nombre', 'descripcion','intervalo','sistema','sumatoria_tiempo_pasos')
     search_fields = ('nombre', 'descripcion')
     list_filter = (SistemaPrincipalFilter, 'intervalo', 'sistema', )
     ordering = ('nombre',)
@@ -106,3 +106,16 @@ class HojaDeRutaAdmin(admin.ModelAdmin):
         )
 
     crear_programaciones.short_description = "Crear programaciones para las hojas seleccionadas"
+
+
+
+def tiempo_total(self, obj):
+        """
+        Calcula la suma del campo 'tiempo' de todos los pasos asociados a la HojaDeRuta.
+        Se utiliza una agregación para mayor eficiencia.
+        """
+        resultado = obj.pasoshojaruta_set.aggregate(total=Sum('tiempo'))
+        total = resultado['total'] if resultado['total'] is not None else 0
+        return total
+
+tiempo_total.short_description = "Tiempo Total"

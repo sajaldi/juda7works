@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}  {# O usa tu template base del admin #}
+{% load static %}
+{% block content %}
+  <h1>Importar Sistemas desde Excel</h1>
+  {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="archivo" accept=".xlsx, .xls">
+    <button type="submit">Importar</button>
+  </form>
+{% endblock %}

@@ -148,6 +148,7 @@ def generar_ordenes(modeladmin, request, queryset):
                     orden = OrdenDeTrabajo.objects.create(
                         nombre=f"WO-{hoja_de_ruta.nombre} - {area.nombre}",
                         HojaDeRuta=hoja_de_ruta,
+                        horario=horario,
                         fechaDeInicio=hora_actual,
                         fechaDeFin=hora_actual + timedelta(minutes=duracion_total_pasos),
                         area=area
