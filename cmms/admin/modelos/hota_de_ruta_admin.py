@@ -109,13 +109,4 @@ class HojaDeRutaAdmin(admin.ModelAdmin):
 
 
 
-def tiempo_total(self, obj):
-        """
-        Calcula la suma del campo 'tiempo' de todos los pasos asociados a la HojaDeRuta.
-        Se utiliza una agregación para mayor eficiencia.
-        """
-        resultado = obj.pasoshojaruta_set.aggregate(total=Sum('tiempo'))
-        total = resultado['total'] if resultado['total'] is not None else 0
-        return total
 
-tiempo_total.short_description = "Tiempo Total"

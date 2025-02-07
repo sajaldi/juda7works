@@ -9,12 +9,55 @@ from django.core.exceptions import ValidationError
 # Create your models here.
 
 
+
+
+# Modelo Material
+class Unidad(models.Model): 
+    nombre = models.CharField(max_length=100)
+    abreviatura = models.CharField(max_length=10)
+    def __str__(self):
+        return self.nombre
+
+
+
 #
 class Marca(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     def __str__(self):
         return self.nombre
     
+class Personal(models.Model):
+    nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
+    dni = models.CharField(max_length=13)
+    def __str__(self):
+        return f"{self.nombre} {self.apellido}"
+    
+class Puesto(models.Model):
+    nombre = models.CharField(max_length=100)
+    def __str__(self):
+        return self.nombre
+    
+class Cuadrilla(models.Model):
+    nombre = models.CharField(max_length=100)
+    personal = models.ManyToManyField(Personal)
+    def __str__(self):
+        return self.nombre
+    
+
+
+class Material(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField()
+    tipo = models.CharField(max_length=20, choices=[('REPUESTO','Repuesto'),('EPP','Equipo de Protección Personal'),('HERRAMIENTA','herramienta')])
+    marca = models.ForeignKey(Marca, on_delete=models.CASCADE, null=True)
+    codigo_de_barra = models.CharField(max_length=100, null=True)
+    unidades = models.ForeignKey(Unidad, on_delete=models.CASCADE)
+   
+    def __str__(self):  
+        return self.nombre
+    
+
 class Frecuencia(models.Model):
     nombre = models.CharField(max_length=50)
     intervalo = models.IntegerField()
@@ -131,6 +174,26 @@ class Sistema(models.Model):
     def __str__(self):
         return f"{self.principal} {self.nombre}" if self.principal else self.nombre
 
+
+ 
+
+class Herramienta(models.Model):
+    nombre = models.CharField(max_length=100)
+    marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
+    categoria = models.ManyToManyField(Categoria, related_name='herramientas', blank=True)
+    def __str__(self):
+        return self.nombre
+    
+
+class KitDeHerramientas(models.Model):
+    nombre = models.CharField(max_length=100)
+    herramientas = models.ManyToManyField(Herramienta, related_name='kits_de_herramientas')
+    descripcion = models.TextField(null=True)
+    def __str__(self):
+        return self.nombre
+
+
+
 class HojaDeRuta(models.Model):
     descripcion = models.TextField(null=True)
     
@@ -139,6 +202,7 @@ class HojaDeRuta(models.Model):
     sistema = models.ForeignKey(Sistema, on_delete=models.CASCADE, null=True, blank=True)  # Agrega esta línea
     #areas = models.ManyToManyField(Area, related_name='hojas_de_ruta', blank=True)  # Relación Muchos a Muchos
     nombre = models.CharField(max_length=100)
+    kitDeHerramientas = models.ForeignKey(KitDeHerramientas, on_delete=models.CASCADE, null=True, blank=True)
     def __str__(self):
         return self.nombre
     
@@ -294,3 +358,5 @@ class MovimientoDeInventario(models.Model):
 
     def __str__(self):
         return f"{self.movimiento} ({self.get_tipo_de_transaccion_display()})"
+
+
