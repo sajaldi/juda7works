@@ -27,7 +27,8 @@ SECRET_KEY = 'django-insecure-6ksug4(r#8gm$$_y!uecg75srp71oant9uw1g)!h-^dgqt_j4k
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://juda7works.onrender.com']
+CSRF_TRUSTED_ORIGINS = [
+    "https://c5e4-181-115-64-18.ngrok-free.app"]
 
 port = int(os.environ.get('PORT', 8000))
 

@@ -12,7 +12,7 @@ class DiaHorarioInline(admin.TabularInline):
 class HorarioPreestablecidoAdmin(admin.ModelAdmin):
     list_display = ('nombre','total_duracion_en_minutos','total_duracion_en_horas')  # Muestra solo el nombre del horario
     inlines = [DiaHorarioInline]  # Agrega los días como una sección en línea
-
+    search_fields = ('nombre',)
     # Solución para `list_filter`
     def get_dias_semana_filters(self, request):
         # Personaliza el filtro si es necesario

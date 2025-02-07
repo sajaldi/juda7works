@@ -139,7 +139,6 @@ class HojaDeRuta(models.Model):
     sistema = models.ForeignKey(Sistema, on_delete=models.CASCADE, null=True, blank=True)  # Agrega esta línea
     #areas = models.ManyToManyField(Area, related_name='hojas_de_ruta', blank=True)  # Relación Muchos a Muchos
     nombre = models.CharField(max_length=100)
-    horario = models.ForeignKey(HorarioPreestablecido, on_delete=models.SET_NULL, null=True, blank=True)
     def __str__(self):
         return self.nombre
     
@@ -187,6 +186,8 @@ class Programacion(models.Model):
     fecha_final = models.DateTimeField(null=True)  # Agregar el campo fecha_final
     areas = models.ManyToManyField(Area, related_name='programacion', blank=True)  # Relación Muchos a Muchos
     activos = models.ManyToManyField(Activo, related_name='programacion',blank=True)
+    horario = models.ForeignKey(HorarioPreestablecido, on_delete=models.SET_NULL, null=True, blank=True)
+
     programado = models.BooleanField(default=False)
     class Meta:
         verbose_name = "Programación"

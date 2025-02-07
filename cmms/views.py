@@ -20,14 +20,13 @@ def get_activos_por_categoria(request):
     activos = Activo.objects.filter(modelo__categoria_id=categoria_id).values("id", "nombre")
     return JsonResponse({"activos": list(activos)})
 
-
 def vista_anual(request):
     # Obtener el año actual
     year = datetime.now().year
 
     months = [
-        (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'), 
-        (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'), 
+        (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
+        (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
         (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
     ]
 
@@ -59,7 +58,9 @@ def vista_anual(request):
         sistema = orden.HojaDeRuta.sistema
         sistema_principal = sistema.principal if sistema.principal else "Sin Sistema Principal"
         hoja_de_ruta = orden.HojaDeRuta.nombre
-        horario = orden.HojaDeRuta.horario
+        # Obtener el horario de la programación en lugar de la hoja de ruta
+        programacion = orden.programacion  # Asumiendo que existe una relación 'programacion' en OrdenDeTrabajo
+        horario = programacion.horario if programacion else None # Obtener horario de programacion
         color = orden.HojaDeRuta.intervalo.color
 
         if sistema_principal not in ordenes_por_sistema:

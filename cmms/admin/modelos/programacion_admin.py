@@ -15,170 +15,166 @@ from datetime import timedelta
 
 
 # Función para generar órdenes de trabajo a partir de una programación.
+##version que funciona
+
+
+from datetime import timedelta
+
+from datetime import timedelta
+
+def get_next_day_with_enough_time(hora_actual, duracion_total_pasos, dias_habilitados, dia_map, max_days=365):
+    """
+    Retorna la hora de inicio del próximo día en el que se disponga de un bloque continuo
+    con tiempo suficiente (duracion_total_pasos en minutos) para ejecutar la orden.
+    Si no se encuentra un día en el rango de max_days, se lanza un error.
+    """
+    days_checked = 0
+    while days_checked < max_days:
+        hora_actual += timedelta(days=1)
+        dia = hora_actual.weekday()
+        dia_abreviado = dia_map[dia]
+        if dia_abreviado in dias_habilitados:
+            hora_inicio_dia, hora_final_dia = dias_habilitados[dia_abreviado]
+            # Ajusta la hora actual a la hora de inicio del día habilitado
+            new_start = hora_actual.replace(hour=hora_inicio_dia.hour, minute=hora_inicio_dia.minute, second=0, microsecond=0)
+            new_end = hora_actual.replace(hour=hora_final_dia.hour, minute=hora_final_dia.minute, second=0, microsecond=0)
+            available = (new_end - new_start).total_seconds() / 60
+            if available >= duracion_total_pasos:
+                return new_start
+        days_checked += 1
+    raise OverflowError("No se encontró un día con suficiente tiempo disponible en un rango de {} días.".format(max_days))
+
+
 def generar_ordenes(modeladmin, request, queryset):
     # Lista para almacenar todas las órdenes que se van a crear.
     ordenes_creadas = []
 
     # Iteramos sobre cada programación seleccionada en el admin.
     for programacion in queryset:
-        # Si la programación ya fue procesada (programado=True), se omite.
         if programacion.programado:
             modeladmin.message_user(
-                request, 
-                f"La programación '{programacion.nombre}' ya fue programada.", 
+                request,
+                f"La programación '{programacion.nombre}' ya fue programada.",
                 level='error'
             )
             continue
 
-        # Se obtiene la hoja de ruta asociada a la programación.
         hoja_de_ruta = programacion.HojaDeRuta
-        
-        # Se obtiene el horario preestablecido de la hoja de ruta (si existe).
-        horario = hoja_de_ruta.horario if hasattr(hoja_de_ruta, 'horario') else None
-        
-        # Se obtiene la frecuencia (intervalo) de la hoja de ruta (si existe).
+        horario = programacion.horario if hasattr(programacion, 'horario') else None
         frecuencia = hoja_de_ruta.intervalo if hasattr(hoja_de_ruta, 'intervalo') else None
 
-        # Si no hay horario, se muestra un mensaje de error y se continúa con la siguiente programación.
         if not horario:
             modeladmin.message_user(
-                request, 
-                f"La programación '{programacion.nombre}' no tiene un horario preestablecido asociado.", 
+                request,
+                f"La programación '{programacion.nombre}' no tiene un horario preestablecido asociado.",
                 level='error'
             )
             continue
-        
-        # Si no hay frecuencia, se muestra un mensaje de error y se continúa.
+
         if not frecuencia:
             modeladmin.message_user(
-                request, 
-                f"La programación '{programacion.nombre}' no tiene una frecuencia asociada.", 
+                request,
+                f"La programación '{programacion.nombre}' no tiene una frecuencia asociada.",
                 level='error'
             )
             continue
 
-        # Se inicializa la hora_actual con la fecha de inicio de la programación.
         hora_actual = programacion.fechaDeInicio
-        # Se obtiene la fecha final de la programación.
         fecha_final = programacion.fecha_final
 
-        # Se obtiene la duración total (en minutos) de los pasos de la hoja de ruta.
         duracion_total_pasos = hoja_de_ruta.sumatoria_tiempo_pasos()
         if duracion_total_pasos == 0:
             modeladmin.message_user(
-                request, 
-                f"La programación '{programacion.nombre}' no tiene pasos definidos en la hoja de ruta.", 
+                request,
+                f"La programación '{programacion.nombre}' no tiene pasos definidos en la hoja de ruta.",
                 level='error'
             )
             continue
 
-        # Se construye un diccionario con los días habilitados.
-        # Cada clave es la abreviatura del día (ejemplo 'L' para lunes) y el valor es una tupla (horaInicio, horaFinal)
-        # obtenida de los objetos de la relación DiaHorario.
-        dias_habilitados = {d.dia: (d.horaInicio, d.horaFinal) for d in horario.dias_horarios.all()}
-
-        # Mapeo de los números de día (weekday) a abreviaturas:
-        # 0: Lunes ('L'), 1: Martes ('M'), 2: Miércoles ('X'), 3: Jueves ('J'),
-        # 4: Viernes ('V'), 5: Sábado ('S'), 6: Domingo ('D')
+        # Se construye un diccionario con los días habilitados y sus horarios.
+        dias_habilitados = {
+            d.dia: (d.horaInicio, d.horaFinal) for d in programacion.horario.dias_horarios.all()
+        }
+        # Mapeo para obtener el día abreviado a partir del valor weekday() (0=L, 1=M, ...)
         dia_map = {0: 'L', 1: 'M', 2: 'X', 3: 'J', 4: 'V', 5: 'S', 6: 'D'}
 
-        # Se inicia un ciclo while para generar órdenes mientras la hora_actual sea menor o igual a la fecha final.
+        if not dias_habilitados:
+            modeladmin.message_user(
+                request,
+                f"La programación '{programacion.nombre}' no tiene días habilitados en su horario.",
+                level='error'
+            )
+            continue
+
+        # Ciclo principal: se programan órdenes mientras la hora_actual sea menor o igual a la fecha_final.
         while hora_actual <= fecha_final:
-            # Se obtiene el día de la semana de la hora_actual (número 0 a 6)
+            # Guardamos el inicio del ciclo para luego ajustar la fecha con la frecuencia.
+            hora_inicio_ciclo = hora_actual
             dia_actual = hora_actual.weekday()
-            # Se mapea el número del día a su abreviatura correspondiente.
             dia_abreviado_actual = dia_map[dia_actual]
 
-            # Si el día actual (abreviado) no está en los días habilitados, se incrementa la hora_actual un día y se continúa.
+            # Si el día actual no es habilitado, avanzamos al siguiente día.
             if dia_abreviado_actual not in dias_habilitados:
                 hora_actual += timedelta(days=1)
                 continue
 
-            # Se obtienen el horario de inicio y fin para el día actual, según la configuración.
-            hora_inicio, hora_final = dias_habilitados[dia_abreviado_actual]
-            # Se ajusta la hora_actual para que comience en la hora de inicio definida.
-            hora_actual = hora_actual.replace(hour=hora_inicio.hour, minute=hora_inicio.minute)
+            # Obtenemos el horario del día actual.
+            hora_inicio_dia, hora_final_dia = dias_habilitados[dia_abreviado_actual]
+            # Ajustamos hora_actual al inicio del bloque disponible del día.
+            hora_actual = hora_actual.replace(hour=hora_inicio_dia.hour, minute=hora_inicio_dia.minute, second=0, microsecond=0)
+            # Calculamos el final del bloque disponible del día.
+            current_day_end = hora_actual.replace(hour=hora_final_dia.hour, minute=hora_final_dia.minute, second=0, microsecond=0)
+            available_today = (current_day_end - hora_actual).total_seconds() / 60
 
-            # Se crea un conjunto para llevar un seguimiento de las áreas (niveles) ya procesadas en este ciclo.
+            # Procesamos cada área asociada a la programación.
             areas_procesadas = set()
-
-            # Se itera sobre cada área asociada a la programación.
             for area in programacion.areas.all():
-                # Si el área ya fue procesada, se omite.
                 if area in areas_procesadas:
                     continue
 
-                # Inicialmente, el tiempo_restante es la duración total de los pasos de la hoja de ruta.
-                tiempo_restante = duracion_total_pasos
+                # Verificamos si en el día actual hay tiempo suficiente para la orden completa.
+                if available_today < duracion_total_pasos:
+                    # Si no hay tiempo suficiente, buscamos el siguiente día que tenga el bloque completo.
+                    hora_actual = get_next_day_with_enough_time(hora_actual, duracion_total_pasos, dias_habilitados, dia_map)
+                    # Actualizamos los valores del día actual según la nueva fecha.
+                    dia_act = hora_actual.weekday()
+                    dia_abrev = dia_map[dia_act]
+                    hora_inicio_dia, hora_final_dia = dias_habilitados[dia_abrev]
+                    current_day_end = hora_actual.replace(hour=hora_final_dia.hour, minute=hora_final_dia.minute, second=0, microsecond=0)
+                    available_today = (current_day_end - hora_actual).total_seconds() / 60
 
-                # Se procesa la orden mientras quede tiempo pendiente.
-                while tiempo_restante > 0:
-                    # Se calcula el final del horario del día actual ajustando la hora_actual a la hora final de la jornada.
-                    hora_fin_horario = hora_actual.replace(hour=hora_final.hour, minute=hora_final.minute)
-                    # Se calcula el tiempo disponible en minutos desde la hora_actual hasta el final de la jornada.
-                    tiempo_disponible = max(0, (hora_fin_horario - hora_actual).total_seconds() / 60)
+                # Ahora que sabemos que hay suficiente tiempo, creamos la orden en un bloque completo.
+                try:
+                    orden = OrdenDeTrabajo.objects.create(
+                        nombre=f"WO-{hoja_de_ruta.nombre} - {area.nombre}",
+                        HojaDeRuta=hoja_de_ruta,
+                        fechaDeInicio=hora_actual,
+                        fechaDeFin=hora_actual + timedelta(minutes=duracion_total_pasos),
+                        area=area
+                    )
+                    ordenes_creadas.append(orden)
+                except Exception as e:
+                    modeladmin.message_user(
+                        request,
+                        f"Error al crear orden para '{area.nombre}': {str(e)}",
+                        level='error'
+                    )
+                    continue
 
-                    # Si no hay tiempo disponible en la jornada actual, se busca el siguiente día habilitado:
-                    if tiempo_disponible == 0:
-                        while True:
-                            # Se incrementa la hora_actual un día.
-                            hora_actual += timedelta(days=1)
-                            # Se actualiza el día y su abreviatura.
-                            dia_actual = hora_actual.weekday()
-                            dia_abreviado_actual = dia_map[dia_actual]
-                            # Si el nuevo día es habilitado, se ajusta la hora_actual al inicio de la jornada de ese día.
-                            if dia_abreviado_actual in dias_habilitados:
-                                hora_inicio, _ = dias_habilitados[dia_abreviado_actual]
-                                hora_actual = hora_actual.replace(hour=hora_inicio.hour, minute=hora_inicio.minute)
-                                break
-                        continue
-
-                    # Se calcula la duración de la parte de la orden que se puede programar en el día actual.
-                    # Es el mínimo entre el tiempo pendiente y el tiempo disponible.
-                    duracion_parte = min(tiempo_restante, tiempo_disponible)
-
-                    # Si se puede programar una parte (duracion_parte > 0), se crea la orden de trabajo.
-                    if duracion_parte > 0:
-                        orden = OrdenDeTrabajo.objects.create(
-                            nombre=f"WO-{hoja_de_ruta.nombre} - {area.nombre}",
-                            HojaDeRuta=hoja_de_ruta,
-                            fechaDeInicio=hora_actual,
-                            fechaDeFin=hora_actual + timedelta(minutes=duracion_parte),
-                            area=area
-                        )
-                        # Se agrega la orden creada a la lista.
-                        ordenes_creadas.append(orden)
-
-                    # Se reduce el tiempo_restante con la duración de la parte programada.
-                    tiempo_restante -= duracion_parte
-                    # Se actualiza la hora_actual sumándole la duración de la parte creada.
-                    hora_actual += timedelta(minutes=duracion_parte)
-
-                    # Si todavía queda tiempo pendiente para completar la rutina,
-                    # se busca el siguiente día habilitado para continuar.
-                    if tiempo_restante > 0:
-                        while True:
-                            hora_actual += timedelta(days=1)
-                            dia_actual = hora_actual.weekday()
-                            dia_abreviado_actual = dia_map[dia_actual]
-                            if dia_abreviado_actual in dias_habilitados:
-                                hora_inicio, _ = dias_habilitados[dia_abreviado_actual]
-                                hora_actual = hora_actual.replace(hour=hora_inicio.hour, minute=hora_inicio.minute)
-                                break
-
-                # Una vez completada la orden para el área, se marca el área como procesada.
+                # Actualizamos hora_actual al finalizar la orden y recalculamos el tiempo disponible.
+                hora_actual += timedelta(minutes=duracion_total_pasos)
+                available_today = (current_day_end - hora_actual).total_seconds() / 60
                 areas_procesadas.add(area)
 
-            # Al finalizar el procesamiento de todas las áreas en el día, se incrementa la hora_actual 
-            # sumándole el intervalo definido en la frecuencia (en días) para la siguiente iteración.
-            hora_actual += timedelta(days=frecuencia.intervalo)
+            # Luego de procesar todas las áreas en este ciclo, avanzamos la hora_actual según la FRECUENCIA.
+            hora_actual = hora_inicio_ciclo + timedelta(days=frecuencia.intervalo)
 
-        # Se marca la programación como programada y se guarda.
+        # Se marca la programación como completada.
         programacion.programado = True
         programacion.save()
 
-    # Se notifica en el admin cuántas órdenes se han generado.
     modeladmin.message_user(request, f"Órdenes generadas: {len(ordenes_creadas)}")
+
 
 # Se define la descripción corta para la acción en el admin.
 generar_ordenes.short_description = "Generar órdenes de trabajo"
@@ -357,7 +353,7 @@ class ActivoInline(admin.TabularInline):
 @admin.register(Programacion)
 class ProgramacionAdmin(admin.ModelAdmin):
     form = ProgramacionForm
-    list_display = ('nombre', 'fechaDeInicio', 'programado')
+    list_display = ('nombre', 'fechaDeInicio', 'programado','horario')
     list_editable = ('fechaDeInicio',)
     list_filter = ('programado', 'fechaDeInicio', 'activos__modelo__categoria')  # ✅ Filtro correcto
     actions = [generar_ordenes, generar_ordenes_por_activo, eliminar_ordenes]

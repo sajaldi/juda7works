@@ -42,29 +42,20 @@ class SistemaPrincipalFilter(admin.SimpleListFilter):
 
 class HojaDeRutaInline(admin.TabularInline):
     model = HojaDeRuta
-    fields = ('nombre','intervalo','horario')
+    fields = ('nombre','intervalo',)
     extra =1
 @admin.register(HojaDeRuta)
 class HojaDeRutaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'descripcion','intervalo','sistema','horario')
+    list_display = ('nombre', 'descripcion','intervalo','sistema',)
     search_fields = ('nombre', 'descripcion')
-    list_filter = (SistemaPrincipalFilter, 'intervalo', 'sistema', 'horario')
+    list_filter = (SistemaPrincipalFilter, 'intervalo', 'sistema', )
     ordering = ('nombre',)
     inlines = [PasosHojaDeRutaInline]
-    readonly_fields = ('total_duracion_en_minutos', 'total_duracion_en_horas',)
-    def total_duracion_en_minutos(self, obj):
-        if obj.horario:
-            return obj.horario.total_duracion_en_minutos
-        return None
-    total_duracion_en_minutos.short_description = 'Total Duración en Minutos'
+   
 
 
 
-    def total_duracion_en_horas(self, obj):
-        if obj.horario:
-            return obj.horario.total_duracion_en_horas
-        return None
-    total_duracion_en_horas.short_description = 'Total Duración en Horas'
+
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "areas":
