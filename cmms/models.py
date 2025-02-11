@@ -37,12 +37,26 @@ class Personal(models.Model):
     
 class Puesto(models.Model):
     nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True)
+    HorarioPreestablecido = models.ForeignKey('HorarioPreestablecido', on_delete=models.CASCADE, null=True, blank=True)
+
+    #horas trabajadas en este puesto a traves del horario prestablecido
+
+    @property
+    def total_horas_trabajadas(self):
+        return sum(horario.total_duracion_en_minutos for horario in self.horarios.all())
+
     def __str__(self):
         return self.nombre
     
 class Cuadrilla(models.Model):
     nombre = models.CharField(max_length=100)
-    personal = models.ManyToManyField(Personal)
+    puestos = models.ManyToManyField(Puesto, related_name='cuadrillas', blank=True)
+    
+    #suma de horas de trabajo de los empleados
+  
+    
+
     def __str__(self):
         return self.nombre
     
@@ -51,7 +65,7 @@ class Cuadrilla(models.Model):
 class Material(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField()
-    tipo = models.CharField(max_length=20, choices=[('REPUESTO','Repuesto'),('EPP','Equipo de Protección Personal'),('HERRAMIENTA','herramienta')])
+    tipo = models.CharField(max_length=20, choices=[('REPUESTO','Repuesto'),('EPP','EPP'),('HERRAMIENTA','herramienta')])
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE, null=True)
     codigo_de_barra = models.CharField(max_length=100, null=True)
     unidades = models.ForeignKey(Unidad, on_delete=models.CASCADE)
@@ -82,7 +96,7 @@ class Categoria(models.Model):
 class Material(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField()
-    tipo = models.CharField(max_length=20, choices=[('REPUESTO','Repuesto'),('EPP','Equipo de Protección Personal'),('HERRAMIENTA','herramienta')])
+    tipo = models.CharField(max_length=20, choices=[('REPUESTO','Repuesto'),('EPP','EPP'),('HERRAMIENTA','herramienta')])
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE, null=True)
     codigo_de_barra = models.CharField(max_length=100, null=True)
 
@@ -190,13 +204,15 @@ class Sistema(models.Model):
 
 class Herramienta(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
+    material = models.ForeignKey(Material, on_delete=models.CASCADE, null=True)
     descripcion = models.TextField(null=True)
     unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE , null=True)
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE,null=True, default="Generico")
     categoria = models.ManyToManyField(Categoria, related_name='herramientas', blank=True)
     def __str__(self):
         return self.nombre
-    
+
+
 
 class KitDeHerramientas(models.Model):  # Nombre del modelo corregido
     clave_kit = models.CharField(max_length=100, unique=True, null=True, blank=True)
@@ -216,13 +232,14 @@ def generar_clave_kit(sender, instance, **kwargs):
         instance.clave_kit = f"INSTA-HER-{nuevo_numero:02}" 
 
 class HojaDeRuta(models.Model):
+    clave_rutina = models.CharField(max_length=100, unique=True, null=True, blank=True)
     descripcion = models.TextField(null=True)
     
     #plandemantenimiento = models.ForeignKey(PlanDeMantenimiento, on_delete=models.CASCADE, null=True)
     intervalo = models.ForeignKey(Frecuencia,on_delete=models.CASCADE, null=True, blank=True)
     sistema = models.ForeignKey(Sistema, on_delete=models.CASCADE, null=True, blank=True)  # Agrega esta línea
     #areas = models.ManyToManyField(Area, related_name='hojas_de_ruta', blank=True)  # Relación Muchos a Muchos
-    nombre = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=100, unique=True)
     kitDeHerramientas = models.ForeignKey(KitDeHerramientas, on_delete=models.CASCADE, null=True, blank=True)
     def __str__(self):
         return self.nombre
@@ -241,6 +258,8 @@ class PasosHojaDeRuta(models.Model):
 
     def __str__(self):
         return self.paso
+    class Meta:
+        unique_together = ('paso', 'hojaderuta')
     
 
     

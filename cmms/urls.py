@@ -2,6 +2,9 @@
 from django.urls import path
 
 from cmms.admin.modelos.sistema_admin import importar_sistemas_excel
+from views.puesto_views import gestionar_puestos
+from .admin.modelos.puesto_admin import *
+from views.area_views import exportar_plantilla_areas, importar_areas_view
 from views.herramientas_view import exportar_plantilla_herramientas, importar_herramientas_view
 
 
@@ -40,5 +43,10 @@ urlpatterns = [
     path('importar_herramientas/', importar_herramientas_view, name='importar_herramientas'),
     path("exportar_herramientas/", exportar_plantilla_herramientas, name="exportar_plantilla_herramientas"),
     # Menu
-    path('menu', menu, name='cmms_menu'),  # Asocia la vista a la URL
+    path('menu', menu, name='cmms_menu'),  
+    
+    path('exportar_area', exportar_plantilla_areas, name='exportar_plantilla_areas'),
+    path('importar_areas', importar_areas_view, name='importar_areas'),
+path('gestionar_puestos/', gestionar_puestos, name='gestionar_puestos'),
+   
 ]

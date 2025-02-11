@@ -101,10 +101,7 @@ class HijoInline(admin.TabularInline):
     model = Sistema
     extra = 1
 
-    def get_queryset(self, request):
-        # Retornar solo los sistemas que sean principales (o según tu lógica)
-        return super().get_queryset(request).filter(principal=True)
-
+   
 
 class PrincipalFilter(admin.SimpleListFilter):
     title = 'Principal'

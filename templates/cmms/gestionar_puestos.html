@@ -1,0 +1,33 @@
+<!-- cmms/gestionar_puestos.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Puestos de Trabajo</title>
+</head>
+<body>
+    <h2>Gestionar Puestos de Trabajo</h2>
+
+    <h3>Importar Puestos de Trabajo</h3>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="archivo">Seleccione el archivo (CSV o Excel):</label>
+        <input type="file" name="archivo" id="archivo" required>
+        <button type="submit">Subir Archivo</button>
+    </form>
+
+    <h3>Exportar Puestos de Trabajo</h3>
+    <a href="{% url 'gestionar_puestos' %}?exportar=true">
+        <button>Descargar Plantilla</button>
+    </a>
+
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>

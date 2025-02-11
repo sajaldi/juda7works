@@ -1,0 +1,12 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+    {{ block.super }}
+    {% if cantidad_form %}
+        <form method="post">
+            {% csrf_token %}
+            <label for="cantidad">Cantidad:</label>
+            <input type="number" name="cantidad" id="cantidad" value="1" min="1">
+            <button type="submit">Clonar</button>
+        </form>
+    {% endif %}
+{% endblock %}
