@@ -1,14 +1,12 @@
-
-
-import datetime
-from pyexpat.errors import messages
-from django.http import HttpResponse
-from django.shortcuts import redirect, render
 import openpyxl
+from openpyxl.styles import Font
+from io import BytesIO
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.contrib import messages
 import pandas as pd
-
-from cmms.models import Categoria, Herramienta, Marca, Unidad
-
+from cmms.models import Herramienta, Unidad, Marca, Categoria  # Importa tus modelos
+import datetime
 
 def exportar_plantilla_herramientas(request):
     """
@@ -18,26 +16,39 @@ def exportar_plantilla_herramientas(request):
     sheet = workbook.active
     sheet.title = "Herramientas"
 
-    headers = ['Nombre', 'Descripción', 'Unidad', 'Marca', 'Categorías']  # Incluye categorías
+    headers = ['ID', 'Nombre', 'Descripción', 'Unidad', 'Marca', 'Categorías']
     sheet.append(headers)
 
-    herramientas = Herramienta.objects.all()
+    # Estilo para encabezados
+    bold_font = Font(bold=True)
+    for cell in sheet[1]:
+        cell.font = bold_font
+
+    # Obtener todas las herramientas (optimizado)
+    herramientas = Herramienta.objects.all().select_related('unidad', 'marca').prefetch_related('categoria')
+
     for herramienta in herramientas:
-        categorias_str = ", ".join([cat.nombre for cat in herramienta.categoria.all()])  # Formatea categorías como string
+        categorias_str = ", ".join(cat.nombre for cat in herramienta.categoria.all())  # Más eficiente
         sheet.append([
+            herramienta.id,
             herramienta.nombre,
-            herramienta.descripcion,
+            herramienta.descripcion or "",
             herramienta.unidad.nombre if herramienta.unidad else "",
             herramienta.marca.nombre if herramienta.marca else "",
-            categorias_str  # Añade la cadena de categorías
+            categorias_str
         ])
 
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
     response['Content-Disposition'] = f'attachment; filename="plantilla_herramientas_{datetime.datetime.now().strftime("%Y%m%d")}.xlsx"'
 
-    workbook.save(response)
     return response
-
 
 def importar_herramientas_view(request):
     """
@@ -48,48 +59,69 @@ def importar_herramientas_view(request):
         extension = archivo.name.split('.')[-1].lower()
 
         if extension not in ["csv", "xlsx", "xls"]:
-            messages.error(request, "Formato no soportado. Por favor, suba un archivo CSV o Excel (.xlsx, .xls).")
+            messages.error(request, "Formato no soportado. Debe ser CSV o Excel.")
             return redirect(request.path)
 
         try:
             if extension == "csv":
-                df = pd.read_csv(archivo)
+                df = pd.read_csv(archivo, dtype=str, keep_default_na=False)  # Manejar celdas vacías
             else:
-                df = pd.read_excel(archivo)
+                df = pd.read_excel(archivo, dtype=str, keep_default_na=False)
 
-            columnas_requeridas = ['Nombre', 'Descripción', 'Unidad', 'Marca', 'Categorías']  # Incluye categorías
+            df.columns = [col.strip().lower() for col in df.columns]
+            columnas_requeridas = ['id', 'nombre', 'descripción', 'unidad', 'marca', 'categorías']
+
             if not all(col in df.columns for col in columnas_requeridas):
-                messages.error(request, "El archivo no tiene las columnas correctas. Use la plantilla de importación.")
+                messages.error(request, "Faltan columnas. Use la plantilla.")
                 return redirect(request.path)
 
-            for _, row in df.iterrows():
-                unidad, _ = Unidad.objects.get_or_create(nombre=row['Unidad'].strip()) if pd.notna(row['Unidad']) else (None, None)
-                marca, _ = Marca.objects.get_or_create(nombre=row['Marca'].strip()) if pd.notna(row['Marca']) else (None, None)
+            errores = []
+            for index, row in df.iterrows():
+                herramienta_id = row['id']
+                nombre = row['nombre']
+                descripcion = row['descripción']
+                unidad_nombre = row['unidad']
+                marca_nombre = row['marca']
+                categorias_nombres = [cat.strip() for cat in row['categorías'].split(',')] if row['categorías'] else []
 
-                # Manejo de categorías (separadas por comas en el archivo)
-                categorias_nombres = [cat.strip() for cat in row['Categorías'].split(',')] if pd.notna(row['Categorías']) else []
-                categorias = []
-                for cat_nombre in categorias_nombres:
-                    categoria, _ = Categoria.objects.get_or_create(nombre=cat_nombre)
-                    categorias.append(categoria)
+                # Validación (simplificada)
+                if not all([nombre, descripcion, unidad_nombre, marca_nombre]):
+                    errores.append(f"Fila {index + 2}: Datos obligatorios incompletos.")
+                    continue
 
+                try:
+                    unidad, _ = Unidad.objects.get_or_create(nombre=unidad_nombre)
+                    marca, _ = Marca.objects.get_or_create(nombre=marca_nombre)
+                    
+                    herramienta, created = Herramienta.objects.update_or_create(
+                        id=herramienta_id,
+                        defaults={
+                            'nombre': nombre,
+                            'descripcion': descripcion,
+                            'unidad': unidad,
+                            'marca': marca,
+                        }
+                    )
 
-                herramienta, _ = Herramienta.objects.update_or_create(
-                    nombre=row['Nombre'], # Usar nombre como identificador único
-                    defaults={
-                        'descripcion': row['Descripción'],
-                        'unidad': unidad,
-                        'marca': marca,
-                        # Las categorías se añaden después de crear/actualizar la herramienta
-                    }
-                )
-                herramienta.categoria.set(categorias) # Asigna las categorías a la herramienta
+                    # Actualización de categorías (más eficiente)
+                    herramienta.categoria.set([Categoria.objects.get_or_create(nombre=cat)[0] for cat in categorias_nombres])
 
+                    if created:
+                        print(f"Fila {index + 2}: Herramienta creada.")
+                    else:
+                        print(f"Fila {index + 2}: Herramienta actualizada.")
 
-            messages.success(request, "Herramientas importadas correctamente.")
+                except Exception as e:
+                    errores.append(f"Fila {index + 2}: Error: {e}")
+
+            if errores:
+                messages.error(request, "Errores en la importación:\n" + "\n".join(errores))
+            else:
+                messages.success(request, "Importación exitosa.")
+
         except Exception as e:
-            messages.error(request, f"Error al procesar el archivo: {e}")
+            messages.error(request, f"Error al procesar archivo: {e}")
 
         return redirect(request.path)
 
-    return render(request, "cmms/importar_herramientas.html")  # Asegúrate de tener el template correcto
+    return render(request, "cmms/importar_herramientas.html")  # Asegúrate de tener la plantilla

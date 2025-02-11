@@ -361,9 +361,6 @@ def vista_activos_por_dia(request, fecha_inicio):
     return render(request, 'cmms/vista_activos_por_dia.html', context)
 
 
-
-
-
 def exportar_pasos_hoja_de_ruta(request):
     # Crear un nuevo libro de trabajo y hoja
     wb = openpyxl.Workbook()
@@ -510,3 +507,24 @@ def ordenes_por_fecha(request, semana):
          'hoja_ruta_por_fecha': hoja_ruta_por_fecha,
     }
     return render(request, 'cmms/ordenes_por_fecha.html', context)
+
+
+
+from django.shortcuts import render
+
+def menu_view(request):
+    # Aquí podrías hacer una consulta a la base de datos para obtener los elementos dinámicos
+    dynamic_menu_items = [
+        {'name': 'Nuevo Item 1', 'url': '/nuevo_item_1/'},
+        {'name': 'Nuevo Item 2', 'url': '/nuevo_item_2/'},
+        # Otros elementos dinámicos
+    ]
+    
+    return render(request, 'nombre_de_tu_template.html', {'dynamic_menu_items': dynamic_menu_items})
+
+
+from .models import MenuItem
+
+def menu_view(request):
+    dynamic_menu_items = MenuItem.objects.all().order_by('order')
+    return render(request, 'nombre_de_tu_template.html', {'dynamic_menu_items': dynamic_menu_items})

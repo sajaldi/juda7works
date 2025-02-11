@@ -1,10 +1,8 @@
-# filepath: /C:/Django/SoftCoMJuda/Softcom/cmms/views/hoja_de_ruta_views.py
 from pyexpat.errors import messages
 from django.shortcuts import render
 from django.http import HttpResponse
 from openpyxl import Workbook, load_workbook
-from cmms.models import HojaDeRuta, HorarioPreestablecido, Sistema, Frecuencia
-
+from cmms.models import HojaDeRuta, Frecuencia, Sistema
 
 
 def exportar_plantilla_hojaderuta(request):
@@ -14,7 +12,7 @@ def exportar_plantilla_hojaderuta(request):
     ws.title = "Plantilla de Exportación de HojaDeRuta"
 
     # Agregar encabezados
-    headers = ["ID", "Nombre", "Descripción", "Intervalo", "Sistema", "Horario"]
+    headers = ["ID", "Nombre", "Descripción", "Intervalo", "Sistema"]
     ws.append(headers)
 
     # Obtener los datos del modelo HojaDeRuta
@@ -22,8 +20,7 @@ def exportar_plantilla_hojaderuta(request):
     for hoja in hojas_de_ruta:
         intervalo_nombre = hoja.intervalo.nombre if hoja.intervalo else ''
         sistema_nombre = hoja.sistema.nombre if hoja.sistema else ''
-        horario_nombre = hoja.horario.nombre if hoja.horario else ''
-        ws.append([hoja.id, hoja.nombre, hoja.descripcion, intervalo_nombre, sistema_nombre, horario_nombre])
+        ws.append([hoja.id, hoja.nombre, hoja.descripcion, intervalo_nombre, sistema_nombre])
 
     # Configurar la respuesta HTTP
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -46,7 +43,7 @@ def importar_plantilla_hojaderuta(request):
         # Leer los datos del archivo Excel
         for row in ws.iter_rows(min_row=2, values_only=True):
             try:
-                hoja_id, nombre, descripcion, intervalo_nombre, sistema_nombre, horario_nombre = row
+                hoja_id, nombre, descripcion, intervalo_nombre, sistema_nombre = row
 
                 # Obtener o crear el intervalo
                 if intervalo_nombre:
@@ -64,14 +61,6 @@ def importar_plantilla_hojaderuta(request):
                 else:
                     sistema = None
 
-                # Obtener o crear el horario
-                if horario_nombre:
-                    horario, created = HorarioPreestablecido.objects.get_or_create(nombre=horario_nombre)
-                    if created:
-                        print(f"Nuevo horario creado: {horario_nombre}")
-                else:
-                    horario = None
-
                 # Actualizar o crear la hoja de ruta
                 hoja, created = HojaDeRuta.objects.update_or_create(
                     id=hoja_id,
@@ -79,8 +68,7 @@ def importar_plantilla_hojaderuta(request):
                         'nombre': nombre,
                         'descripcion': descripcion,
                         'intervalo': intervalo,
-                        'sistema': sistema,
-                        'horario': horario
+                        'sistema': sistema
                     }
                 )
                 importados += 1

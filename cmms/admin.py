@@ -15,7 +15,7 @@ from .admin.modelos.plan_de_mantenimiento_admin import PlanDeMantenimientoAdmin
 from .admin.modelos.frecuencia_admin import FrecuenciaAdmin
 from .admin.modelos.pasos_hoja_de_ruta_admin import PasosHojaDeRutaAdmin
 
-
+admin.site.register(MenuItem)
 
 from django.contrib.admin import AdminSite
 from django.utils.translation import ugettext_lazy as _

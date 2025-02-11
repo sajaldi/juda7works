@@ -2,70 +2,36 @@
 
 {% block content %}
 <div class="container">
-    <nav class="menu">
+    <!-- Contenedor para "Importar Pasos de Hoja de Ruta" -->
+    <div class="category-container">
+        <h3>Importar Pasos de Hoja de Ruta</h3>
         <ul>
-            <li>
-                <a href="{% url 'importar_pasos' %}">
-                    📥 Importar Pasos de Hoja de Ruta
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'exportar_pasos' %}">
-                    📄 Exportar Pasos de Hojas de Ruta
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'vista_activos' %}">
-                    📥 Vista por activos
-                </a>
-            </li>
-
-            <li>
-                <a href="/admin/cmms/hojaderuta/">
-                    📥 Hojas de Ruta
-                </a>
-            </li>
+            <li><a href="{% url 'importar_pasos' %}">Importar Pasos de Hoja de Ruta</a></li>
+            <li><a href="{% url 'exportar_pasos' %}">Exportar Pasos de Hojas de Ruta</a></li>
+            <li><a href="{% url 'vista_activos' %}">Vista por activos</a></li>
+            <li><a href="/admin/cmms/hojaderuta/">Hojas de Ruta</a></li>
         </ul>
+    </div>
 
+    <!-- Contenedor para "Plantilla Anual" -->
+    <div class="category-container">
+        <h3>Plantilla Anual</h3>
         <ul>
-            <li>
-                <a href="{% url 'vista_anual' %}">
-                    📥 Plantilla Anual
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'exportar_plantilla_hojaderuta' %}">
-                    📥 Plantilla de Hojas de Ruta
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'importar_plantilla_hojaderuta' %}">
-                    📥 Importar de Hojas de Ruta
-                </a>
-            </li>
+            <li><a href="{% url 'vista_anual' %}">Plantilla Anual</a></li>
+            <li><a href="{% url 'exportar_plantilla_hojaderuta' %}">⚙️ Plantilla de Hojas de Ruta</a></li>
+            <li><a href="{% url 'importar_plantilla_hojaderuta' %}">⬆️ Importar de Hojas de Ruta</a></li>
         </ul>
+    </div>
 
+    <!-- Contenedor para "Activos y Admin" -->
+    <div class="category-container">
+        <h3>Activos y Admin</h3>
         <ul>
-            <li>
-                <a href="/admin/cmms/activo">
-                    📥 Listado de Activos
-                </a>
-            </li>
-            <li>
-                <a href="/admin/">
-                    📥 Admin
-                </a>
-            </li>
-
-            <li>
-                <a href="{% url 'importar_sistemas' %}">
-                    📥 Importar Sistemas
-                </a>
+            <li><a href="/admin/cmms/activo">Listado de Activos</a></li>
+            <li><a href="/admin/">⚙️ Admin</a></li>
+            <li><a href="{% url 'importar_sistemas' %}">Importar Sistemas</a></li>
         </ul>
-        
-
-
-    </nav>
+    </div>
 
     <div class="content">
         {% block page_content %}{% endblock %}
@@ -73,8 +39,7 @@
 </div>
 
 <style>
-    /* Estilos para el contenedor del menú */
-    .menu {
+    .category-container {
         background-color: #f8f9fa;
         padding: 20px;
         border-radius: 8px;
@@ -82,41 +47,71 @@
         margin-bottom: 20px;
     }
 
-    /* Hacemos que la lista se muestre como un contenedor flexible */
-    .menu ul {
+    .category-container h3 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    .category-container ul {
         list-style: none;
         padding: 0;
-        margin: 0 0 20px 0;
+        margin: 0;
         display: flex;
         flex-wrap: wrap;
         gap: 15px;
     }
 
-    /* Cada elemento de la lista se comporta como una tarjeta */
-    .menu li {
+    .category-container li {
         background-color: #fff;
         border: 1px solid #ddd;
         border-radius: 5px;
-        width: 200px;         /* Ancho fijo para crear un bloque cuadrado o rectangular */
+        width: 200px;
         text-align: center;
         box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        position: relative;
     }
 
-    /* El enlace ocupa todo el bloque y se centra */
-    .menu li a {
+    .category-container li a {
         display: block;
         padding: 15px;
         text-decoration: none;
         font-size: 16px;
         font-weight: bold;
         color: #007bff;
-        transition: background 0.3s, color 0.3s;
+        transition: color 0.3s ease;
+        position: relative;
+        z-index: 1;
     }
 
-    /* Efecto hover para el enlace */
-    .menu li a:hover {
+    .category-container li::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
         background-color: #007bff;
+        transition: left 0.3s ease;
+        z-index: -1;
+    }
+
+    .category-container li:hover::before {
+        left: 0;
+    }
+
+    .category-container li a:hover {
         color: #fff;
+    }
+
+    .category-container li {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .category-container li:hover {
+        transform: translateY(-3px);
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
     }
 </style>
 {% endblock %}

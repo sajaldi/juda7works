@@ -1,10 +1,12 @@
 from datetime import date, datetime
 from django.db import models
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
 from multiselectfield import MultiSelectField
 from mptt.fields import TreeForeignKey
 from django.core.exceptions import ValidationError
+from django.db.models.signals import pre_save
 
 # Create your models here.
 
@@ -118,13 +120,22 @@ class Area(models.Model):
            return f"{self.principal} {self.nombre}" if self.principal else self.nombre
     
 class Kit(models.Model):
+    clave_kit = models.CharField(max_length=100, unique=True, null=True)
     nombre= models.CharField(max_length=100)
     descripcion = models.TextField(null=True)
     materiales = models.ManyToManyField(Material)
 
     def __str__(self):
         return self.nombre
-
+    
+@receiver(pre_save, sender=Kit)
+def generar_clave_kit(sender, instance, **kwargs):
+    if not instance.clave_kit:
+        # Obtener el último número usado o 0
+        ultimo_kit = Kit.objects.order_by('-id').first()
+        ultimo_numero = int(ultimo_kit.clave_kit.split('-')[-1]) if ultimo_kit and ultimo_kit.clave_kit else 0
+        nuevo_numero = ultimo_numero + 1
+        instance.clave_kit = f"INSTA-HER-{nuevo_numero:02}"  # Formato con ceros a la izquierda
 
 
 class HorarioPreestablecido(models.Model):
@@ -178,7 +189,7 @@ class Sistema(models.Model):
  
 
 class Herramienta(models.Model):
-    nombre = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(null=True)
     unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE , null=True)
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE,null=True, default="Generico")
@@ -187,14 +198,22 @@ class Herramienta(models.Model):
         return self.nombre
     
 
-class KitDeHerramientas(models.Model):
+class KitDeHerramientas(models.Model):  # Nombre del modelo corregido
+    clave_kit = models.CharField(max_length=100, unique=True, null=True, blank=True)
     nombre = models.CharField(max_length=100)
     herramientas = models.ManyToManyField(Herramienta, related_name='kits_de_herramientas')
     descripcion = models.TextField(null=True)
     def __str__(self):
         return self.nombre
 
-
+@receiver(pre_save, sender=KitDeHerramientas)  # Decorador corregido
+def generar_clave_kit(sender, instance, **kwargs):
+    if not instance.clave_kit:
+        # Obtener el último número usado o 0
+        ultimo_kit = KitDeHerramientas.objects.order_by('-id').first()  # Modelo corregido aquí también
+        ultimo_numero = int(ultimo_kit.clave_kit.split('-')[-1]) if ultimo_kit and ultimo_kit.clave_kit else 0
+        nuevo_numero = ultimo_numero + 1
+        instance.clave_kit = f"INSTA-HER-{nuevo_numero:02}" 
 
 class HojaDeRuta(models.Model):
     descripcion = models.TextField(null=True)
@@ -362,3 +381,11 @@ class MovimientoDeInventario(models.Model):
         return f"{self.movimiento} ({self.get_tipo_de_transaccion_display()})"
 
 
+class MenuItem(models.Model):
+    name = models.CharField(max_length=255)
+    url = models.CharField(max_length=255)
+    order = models.IntegerField(default=0)  # Para controlar el orden en que se muestran
+
+    def __str__(self):
+        return self.name
+    
