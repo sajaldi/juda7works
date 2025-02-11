@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
 import pandas as pd
-from .models import Activo, Marca, Modelo, Categoria, PasosHojaDeRuta
+from .models import Activo, Herramienta, Marca, Modelo, Categoria, PasosHojaDeRuta, Unidad
 
 
 

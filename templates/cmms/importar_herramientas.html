@@ -1,0 +1,27 @@
+{% extends "admin/base_site.html" %}  {# O usa tu template base del admin #}
+{% load static %}
+
+{% block content %}
+    <h1>Importar Herramientas desde Excel</h1>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">  {# Añadido un div para mejor presentación #}
+            <label for="archivo">Archivo Excel:</label> {# Etiqueta para el input #}
+            <input type="file" class="form-control-file" name="archivo" id="archivo" accept=".xlsx, .xls, .csv"> {# Clase para estilo y ID para la etiqueta #}
+            <small class="form-text text-muted">Seleccione el archivo Excel o CSV con la información de las herramientas.</small> {# Texto de ayuda #}
+        </div>
+        <button type="submit" class="btn btn-primary">Importar</button>  {# Botón con estilo #}
+    </form>
+
+    <a href="{% url 'exportar_plantilla_herramientas' %}" class="btn btn-secondary mt-3">Descargar Plantilla</a> {# Enlace para descargar la plantilla #}
+
+{% endblock %}

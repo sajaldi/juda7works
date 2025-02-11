@@ -179,7 +179,9 @@ class Sistema(models.Model):
 
 class Herramienta(models.Model):
     nombre = models.CharField(max_length=100)
-    marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
+    descripcion = models.TextField(null=True)
+    unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE , null=True)
+    marca = models.ForeignKey(Marca, on_delete=models.CASCADE,null=True, default="Generico")
     categoria = models.ManyToManyField(Categoria, related_name='herramientas', blank=True)
     def __str__(self):
         return self.nombre

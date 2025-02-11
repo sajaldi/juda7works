@@ -13,3 +13,4 @@ from .ordenes_admin import*
 from .frecuencia_admin import*
 from .pasos_hoja_de_ruta_admin import*
 from .kit_de_herramientas_admin import *
+from .personal_admin import *

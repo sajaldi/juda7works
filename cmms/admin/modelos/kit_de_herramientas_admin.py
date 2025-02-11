@@ -6,7 +6,7 @@ from ...models import KitDeHerramientas, Herramienta
 
 @admin.register(KitDeHerramientas)
 class KitDeHerramientasAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'descripcion')
+    list_display = ('nombre', 'descripcion',)
     search_fields = ('nombre', 'descripcion')
   
     ordering = ('nombre',)
@@ -16,7 +16,7 @@ class KitDeHerramientasAdmin(admin.ModelAdmin):
 
 @admin.register(Herramienta)
 class HerramientaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'marca')
+    list_display = ('nombre',  'descripcion', 'marca')
     search_fields = ('nombre', 'marca')
     list_filter = ('marca',)
 

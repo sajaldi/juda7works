@@ -2,6 +2,7 @@
 from django.urls import path
 
 from cmms.admin.modelos.sistema_admin import importar_sistemas_excel
+from views.herramientas_view import exportar_plantilla_herramientas, importar_herramientas_view
 
 
  
@@ -11,22 +12,33 @@ from .views import exportar_pasos_hoja_de_ruta, get_activos_por_categoria, impor
 
 
 urlpatterns = [
-    path('vista_anual/', vista_anual, name='vista_anual'),
-    path('vista_mensual/<str:fecha_inicio>/', vista_mensual, name='vista_mensual'),
-    path('plantilla_sistema/', plantilla_sistema, name='plantilla_sistema'),
-    path('exportar-plantilla-hojaderuta/', exportar_plantilla_hojaderuta, name='exportar_plantilla_hojaderuta'),
-    path('importar-plantilla-hojaderuta/', importar_plantilla_hojaderuta, name='importar_plantilla_hojaderuta'),
-    path("exportar-plantilla/",exportar_plantilla_activos, name="exportar_plantilla"),
+    ## URLS de la aplicación CMMS
+    ## Plantilla de Vista anual
+    path('vista_anual/', vista_anual, name='vista_anual'), # Asocia la vista a la URL de Vista Anual
+    path('vista_mensual/<str:fecha_inicio>/', vista_mensual, name='vista_mensual'), # Asocia la vista a la URL de Vista Mensual
+    # Activos
+    path("exportar-plantilla/",exportar_plantilla_activos, name="exportar_plantilla"),  #
     path("importar-activos/", importar_activos_view, name="importar_activos"),
     path('admin/get_activos_por_categoria/', get_activos_por_categoria, name="get_activos_por_categoria"),
     path('vista_activos/', vista_activos, name='vista_activos'),
-    path('cmms/obtener_ordenes/', obtener_ordenes, name='obtener_ordenes'),
     path('activos-dia/<str:fecha_inicio>/', vista_activos_por_dia, name='activos_por_dia'),
+    # Hoja de Ruta
+    path('exportar-plantilla-hojaderuta/', exportar_plantilla_hojaderuta, 
+         name='exportar_plantilla_hojaderuta'),# Asocia la vista a la URL de Exportar Plantilla de Hoja de Ruta
+    path('importar-plantilla-hojaderuta/', importar_plantilla_hojaderuta, 
+         name='importar_plantilla_hojaderuta'),
+    # Pasos de Hoja de Ruta
     path("exportar_pasos/", exportar_pasos_hoja_de_ruta, name="exportar_pasos"),
     path("importar_pasos/", importar_pasos_hoja_de_ruta, name="importar_pasos"),
-    path('menu', menu, name='cmms_menu'),  # Asocia la vista a la URL
+    # Ordenes
     path('ordenes/semana/<int:semana>/', ordenes_por_fecha, name='ordenes_por_fecha'),
+    path('cmms/obtener_ordenes/', obtener_ordenes, name='obtener_ordenes'),
+    #Sistema   
+    path('plantilla_sistema/', plantilla_sistema, name='plantilla_sistema'), # Asocia la vista a la URL de Plantilla de Sistema
     path('importar_sistemas/', importar_sistemas_excel, name='importar_sistemas'),
-
-
+    # Herramientas
+    path('importar_herramientas/', importar_herramientas_view, name='importar_herramientas'),
+    path("exportar_herramientas/", exportar_plantilla_herramientas, name="exportar_plantilla_herramientas"),
+    # Menu
+    path('menu', menu, name='cmms_menu'),  # Asocia la vista a la URL
 ]
