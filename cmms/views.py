@@ -191,42 +191,37 @@ def vista_mensual(request, fecha_inicio):
     }
     return render(request, 'cmms/vista_mensual.html', context)
 
+
+
+
 def plantilla_sistema(request):
-    if request.method == 'POST':
-        uploaded_file = request.FILES['file']
-        wb = load_workbook(uploaded_file)
+    if request.method == 'GET' and 'exportar' in request.GET:
+        # Generar archivo Excel
+        wb = openpyxl.Workbook()
         ws = wb.active
+        ws.title = "Sistemas"
 
-        errores = []
+        # Agregar encabezados
+        ws.append(["ID", "Nombre", "Sistema Principal"])
 
-        # Leer los datos del archivo Excel
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            sistema_id, nombre, principal_nombre = row
-            if Sistema.objects.filter(nombre=nombre).exists():
-                errores.append(f"El nombre del sistema '{nombre}' ya existe.")
-                continue
+        # Agregar datos de la base de datos
+        for sistema in Sistema.objects.all():
+            ws.append([
+                sistema.id,
+                sistema.nombre,
+                sistema.principal.nombre if sistema.principal else ""
+            ])
 
-            if principal_nombre:
-                try:
-                    principal = Sistema.objects.get(nombre=principal_nombre)
-                except Sistema.DoesNotExist:
-                    errores.append(f"El sistema principal '{principal_nombre}' no existe.")
-                    principal = None
-            else:
-                principal = None
-
-            # Actualizar o crear el sistema
-            Sistema.objects.update_or_create(
-                id=sistema_id,
-                defaults={'nombre': nombre, 'principal': principal}
-            )
-
-        context = {
-            'errores': errores,
-        }
-        return render(request, 'cmms/plantilla_sistema.html', context)
+        # Preparar respuesta HTTP con archivo Excel
+        response = HttpResponse(
+            save_virtual_workbook(wb),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response['Content-Disposition'] = 'attachment; filename=sistemas.xlsx'
+        return response
 
     return render(request, 'cmms/plantilla_sistema.html')
+
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -388,6 +383,11 @@ from django.contrib import messages
 from .models import HojaDeRuta, PasosHojaDeRuta
 
 
+import openpyxl
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import PasosHojaDeRuta, HojaDeRuta
+
 def importar_pasos_hoja_de_ruta(request):
     if request.method == "POST" and request.FILES.get("archivo"):
         archivo = request.FILES["archivo"]
@@ -409,6 +409,18 @@ def importar_pasos_hoja_de_ruta(request):
 
             paso_id, paso_nombre, tiempo, hoja_de_ruta_nombre = row
 
+            # Si el paso a importar tiene la palabra "ELIMINAR", intentamos eliminarlo
+            if str(paso_nombre).strip().upper() == "ELIMINAR":
+                try:
+                    eliminado = PasosHojaDeRuta.objects.filter(id=paso_id).delete()
+                    if eliminado[0] > 0:
+                        print(f"Fila {i}: Paso con ID '{paso_id}' eliminado.")
+                    else:
+                        errores.append(f"Fila {i}: No se encontró el paso con ID '{paso_id}' para eliminar.")
+                except Exception as e:
+                    errores.append(f"Fila {i}: Error al eliminar el paso con ID '{paso_id}' ({str(e)}).")
+                continue  # Pasamos a la siguiente fila sin intentar crear/actualizar
+
             # Validar que los valores Paso Nombre, Tiempo y Hoja de Ruta Nombre no sean None
             if paso_nombre is None or tiempo is None or hoja_de_ruta_nombre is None:
                 errores.append(f"Fila {i}: Hay celdas vacías en la fila (Paso, Tiempo, Hoja de Ruta Nombre).")
@@ -428,8 +440,8 @@ def importar_pasos_hoja_de_ruta(request):
             # Intentar actualizar o crear el paso basado en el ID
             try:
                 paso_obj, created = PasosHojaDeRuta.objects.update_or_create(
-                    id=paso_id, # Usamos el ID del archivo para buscar o crear
-                    defaults={ # Campos a actualizar o crear si no existe
+                    id=paso_id,  # Usamos el ID del archivo para buscar o crear
+                    defaults={  # Campos a actualizar o crear si no existe
                         'paso': paso_nombre,
                         'tiempo': tiempo,
                         'hojaderuta': hoja
@@ -439,7 +451,6 @@ def importar_pasos_hoja_de_ruta(request):
                     print(f"Fila {i}: Paso con ID '{paso_id}' creado.")
                 else:
                     print(f"Fila {i}: Paso con ID '{paso_id}' actualizado.")
-
 
             except Exception as e:
                 errores.append(f"Fila {i}: Error al guardar/actualizar en la base de datos para ID '{paso_id}' ({str(e)}).")
@@ -453,6 +464,7 @@ def importar_pasos_hoja_de_ruta(request):
         return redirect("importar_pasos")  # Ajusta según tu vista de redirección
 
     return render(request, "cmms/importar_pasos.html")
+
 
 
 

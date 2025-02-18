@@ -62,16 +62,7 @@ class Cuadrilla(models.Model):
     
 
 
-class Material(models.Model):
-    nombre = models.CharField(max_length=100)
-    descripcion = models.TextField()
-    tipo = models.CharField(max_length=20, choices=[('REPUESTO','Repuesto'),('EPP','EPP'),('HERRAMIENTA','herramienta')])
-    marca = models.ForeignKey(Marca, on_delete=models.CASCADE, null=True)
-    codigo_de_barra = models.CharField(max_length=100, null=True)
-    unidades = models.ForeignKey(Unidad, on_delete=models.CASCADE)
-   
-    def __str__(self):  
-        return self.nombre
+
     
 
 class Frecuencia(models.Model):
@@ -193,22 +184,30 @@ class DiaHorario(models.Model):
 
 ### aqui definimos la clase de sistema y subsistema
 class Sistema(models.Model):
-    nombre = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=100, unique=True)
     principal = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='subsistemas')
 
     def __str__(self):
         return f"{self.principal} {self.nombre}" if self.principal else self.nombre
 
 
+class CategoriaHerramienta(models.Model):
+    nombre = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.nombre
+    
+
+
+
  
 
 class Herramienta(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
-    material = models.ForeignKey(Material, on_delete=models.CASCADE, null=True)
+    categoria = models.ForeignKey(CategoriaHerramienta, on_delete=models.CASCADE, null=True, blank=True)
     descripcion = models.TextField(null=True)
     unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE , null=True)
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE,null=True, default="Generico")
-    categoria = models.ManyToManyField(Categoria, related_name='herramientas', blank=True)
     def __str__(self):
         return self.nombre
 
@@ -217,7 +216,7 @@ class Herramienta(models.Model):
 class KitDeHerramientas(models.Model):  # Nombre del modelo corregido
     clave_kit = models.CharField(max_length=100, unique=True, null=True, blank=True)
     nombre = models.CharField(max_length=100)
-    herramientas = models.ManyToManyField(Herramienta, related_name='kits_de_herramientas')
+    herramientas = models.ManyToManyField(Herramienta, related_name='kits_de_herramientas', blank=True)
     descripcion = models.TextField(null=True)
     def __str__(self):
         return self.nombre

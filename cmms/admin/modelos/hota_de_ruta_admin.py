@@ -7,6 +7,7 @@ from ...models import Area, HojaDeRuta, PasosHojaDeRuta, Sistema, Programacion
 from django.utils import timezone
 from datetime import datetime
 
+
 # Formulario para seleccionar un área (acción ya existente)
 class AreaSelectionForm(forms.Form):
     area = forms.ModelChoiceField(
@@ -55,6 +56,7 @@ class HojaDeRutaAdmin(admin.ModelAdmin):
     list_filter = (SistemaPrincipalFilter, 'intervalo', 'sistema',)
     ordering = ('nombre',)
     inlines = [PasosHojaDeRutaInline]  # Inline para crear/editar pasos directamente
+    group_by = 'sistema'
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "areas":
@@ -107,7 +109,7 @@ class HojaDeRutaAdmin(admin.ModelAdmin):
 
     # Nueva acción: Agregar 3 pasos fijos (Paso 1, Paso 2 y Paso 3, cada uno con tiempo 1)
     def agregar_tres_pasos(self, request, queryset):
-        steps = ["Paso 1", "Paso 2", "Paso 3"]
+        steps = ["Paso 1", "Paso 2", "Paso 3", "Paso 4","Paso 5"]
         added_steps_count = 0
         for hoja in queryset:
             for step in steps:

@@ -10,7 +10,7 @@ from ...models import  KitDeHerramientas, Material
 """
 
 
-@admin.register(Material)
+
 class MaterialAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'descripcion','tipo','marca','codigo_de_barra')
     search_fields = ('nombre', 'descripcion','tipo','marca','codigo_de_barra')

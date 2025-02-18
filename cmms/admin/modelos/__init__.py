@@ -18,3 +18,5 @@ from .unidades_admin import *
 from .cuadrilla_admin import *
 from .puesto_admin import *
 from .material_admin import *
+from .categoria_herramientas_admin import *
+

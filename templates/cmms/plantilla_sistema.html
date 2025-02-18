@@ -46,7 +46,7 @@
 <body>
     <div class="container">
         <h1>Plantilla de Importación de Sistema</h1>
-        <a href="{% url 'exportar_plantilla_sistema' %}" class="button">Descargar Plantilla de Importación</a>
+        <a href="{% url 'plantilla_sistema' %}" class="button">Descargar Plantilla de Importación</a>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="file-input">

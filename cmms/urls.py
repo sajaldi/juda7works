@@ -3,6 +3,7 @@ from django.urls import path
 
 from cmms.admin.modelos.sistema_admin import importar_sistemas_excel
 from views.puesto_views import gestionar_puestos
+from views.sistemas_view import exportar_plantilla_sistemas, importar_sistemas_view
 from .admin.modelos.puesto_admin import *
 from views.area_views import exportar_plantilla_areas, importar_areas_view
 from views.herramientas_view import exportar_plantilla_herramientas, importar_herramientas_view
@@ -37,8 +38,8 @@ urlpatterns = [
     path('ordenes/semana/<int:semana>/', ordenes_por_fecha, name='ordenes_por_fecha'),
     path('cmms/obtener_ordenes/', obtener_ordenes, name='obtener_ordenes'),
     #Sistema   
-    path('plantilla_sistema/', plantilla_sistema, name='plantilla_sistema'), # Asocia la vista a la URL de Plantilla de Sistema
-    path('importar_sistemas/', importar_sistemas_excel, name='importar_sistemas'),
+    path('plantilla_sistema/', exportar_plantilla_sistemas, name='exportar_plantilla_sistemas'), # Asocia la vista a la URL de Plantilla de Sistema
+    path('importar_sistemas/', importar_sistemas_view, name='importar_sistemas_view'),
     # Herramientas
     path('importar_herramientas/', importar_herramientas_view, name='importar_herramientas'),
     path("exportar_herramientas/", exportar_plantilla_herramientas, name="exportar_plantilla_herramientas"),

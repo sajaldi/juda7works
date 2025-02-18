@@ -1,0 +1,18 @@
+.categoria-group {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.categoria-titulo {
+    cursor: pointer;
+    color: #007bff;
+    font-weight: bold;
+    margin: 0;
+}
+
+.categoria-contenido {
+    margin-top: 10px;
+    padding-left: 10px;
+}
