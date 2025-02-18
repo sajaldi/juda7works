@@ -4,7 +4,9 @@ from django.http import HttpResponse, HttpResponseRedirect
 from openpyxl import Workbook
 from django.utils import timezone
 
-# Filtro personalizado para las fechas
+# Filtro personalizado para las fechas7
+
+
 class FechaOrdenFilter(admin.SimpleListFilter):
     title = 'Fecha de la orden'
     parameter_name = 'fecha'

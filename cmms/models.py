@@ -233,7 +233,7 @@ def generar_clave_kit(sender, instance, **kwargs):
 class HojaDeRuta(models.Model):
     clave_rutina = models.CharField(max_length=100, unique=True, null=True, blank=True)
     descripcion = models.TextField(null=True)
-    
+    ordenamiento = models.IntegerField(null=True,blank=True) #numero entero
     #plandemantenimiento = models.ForeignKey(PlanDeMantenimiento, on_delete=models.CASCADE, null=True)
     intervalo = models.ForeignKey(Frecuencia,on_delete=models.CASCADE, null=True, blank=True)
     sistema = models.ForeignKey(Sistema, on_delete=models.CASCADE, null=True, blank=True)  # Agrega esta línea
@@ -251,7 +251,7 @@ class HojaDeRuta(models.Model):
     sumatoria_tiempo_pasos.short_description = "Tiempo Total Pasos"
 
 class PasosHojaDeRuta(models.Model):
-    paso = models.CharField(max_length=100)
+    paso = models.CharField(max_length=500)
     tiempo = models.IntegerField(null=True)
     hojaderuta = models.ForeignKey(HojaDeRuta, on_delete=models.CASCADE)
 
@@ -283,7 +283,7 @@ class Activo(models.Model):
     
 
 class Programacion(models.Model):
-    nombre = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=100 , unique=True)
     HojaDeRuta = models.ForeignKey(HojaDeRuta,on_delete=models.CASCADE)
     fechaDeInicio = models.DateTimeField(default= timezone.now )
     fecha_final = models.DateTimeField(null=True)  # Agregar el campo fecha_final

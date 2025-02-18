@@ -1,0 +1,29 @@
+/* admin_tree.css */
+
+/* Estilo para los elementos agrupados por sistema */
+ul.tree-sistema {
+    list-style-type: none;
+    padding-left: 20px;
+}
+
+li.sistema-item {
+    font-weight: bold;
+    color: #333;
+    padding-left: 20px;
+}
+
+li.subsistema-item {
+    color: #555;
+    font-size: 14px;
+    padding-left: 40px;
+}
+
+/* Hover para los sistemas */
+li.sistema-item:hover {
+    background-color: #f0f0f0;
+}
+
+/* Hover para los subsistemas */
+li.subsistema-item:hover {
+    background-color: #e0e0e0;
+}

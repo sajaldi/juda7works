@@ -120,6 +120,7 @@ class PrincipalFilter(admin.SimpleListFilter):
 @admin.register(Sistema)
 class SistemaAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'principal',)
+    search_fields = ('nombre',)
     list_filter = (PrincipalFilter,)
     inlines = [HijoInline]
     actions = [exportar_sistemas_seleccionados_excel]

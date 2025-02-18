@@ -1,0 +1,50 @@
+th.column-clave_rutina {
+    background-color: #f0f0f0;  /* Fondo gris claro para el encabezado */
+    font-weight: bold;          /* Negrita en el encabezado */
+    color: #333;                /* Color de texto */
+    transition: all 0.9s ease-in-out; /* Transición suave para todos los cambios */
+}
+
+td.field-clave_rutina {
+    color: #007bff;  /* Color azul para el texto de la columna */
+    font-size: 14px;  /* Tamaño de fuente más pequeño */
+    font-weight: normal; /* Peso de fuente normal */
+    text-align: center; /* Centrar el texto */
+}
+td.field-nombre a{
+    color: #c92b2b;  /* Color azul para el texto de la columna */
+    font-size: 14px;  /* Tamaño de fuente más pequeño */
+    font-weight: normal; /* Peso de fuente normal */
+    text-align: center; /* Centrar el texto */
+}
+
+td.field-clave_rutina a {
+    color: #ff0000; /* Color rojo para los enlaces */
+    text-decoration: none; /* Quitar subrayado */
+}
+
+td.field-clave_rutina a:hover {
+    text-decoration: underline; /* Subrayar el enlace cuando el mouse pase por encima */
+    color: #0056b3;  /* Color azul más oscuro en hover */
+}
+
+/* Estilo para los enlaces dentro del encabezado de la columna clave_rutina */
+th.field-clave_rutina a {
+    color: #333; /* Color del enlace en el encabezado */
+    font-weight: bold; /* Negrita en el enlace del encabezado */
+    text-decoration: none; /* Sin subrayado en el enlace del encabezado */
+}
+
+th.field-clave_rutina a:hover {
+    text-decoration: underline; /* Subrayado cuando el mouse pase por encima */
+    color: #cc0d17c9;  /* Color azul cuando se pasa el mouse por encima */
+}
+
+/* Efecto hover impresionante para el encabezado de la columna clave_rutina */
+th.field-clave_rutina:hover {
+    background-color: #acc9ff; /* Color de fondo vibrante (naranja) al pasar el mouse */
+    color: #fff; /* Texto blanco */
+    transform: scale(1.1); /* Aumenta el tamaño del encabezado */
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3); /* Sombra para darle profundidad */
+    border-radius: 5px; /* Bordes redondeados */
+}

@@ -6,6 +6,7 @@ from django.contrib import messages
 from ...models import Area, HojaDeRuta, PasosHojaDeRuta, Sistema, Programacion
 from django.utils import timezone
 from datetime import datetime
+from django.utils.html import format_html
 
 
 # Formulario para seleccionar un área (acción ya existente)
@@ -15,6 +16,27 @@ class AreaSelectionForm(forms.Form):
         label="Área Principal",
         help_text="Seleccione el área principal para crear las programaciones"
     )
+
+
+
+class SistemaFilter(admin.SimpleListFilter):
+    title = 'Sistema'
+    parameter_name = 'sistema'
+
+    def lookups(self, request, model_admin):
+        sistema_principal_id = request.GET.get('sistema_principal')
+        if sistema_principal_id:
+            sistemas = Sistema.objects.filter(principal__id=sistema_principal_id)
+        else:
+            sistemas = Sistema.objects.all()
+        return [(sistema.id, sistema.nombre) for sistema in sistemas]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(sistema__id=self.value())
+        return queryset
+    
+
 
 # Inline para gestionar los pasos desde la edición de una HojaDeRuta
 class PasosHojaDeRutaInline(admin.TabularInline):
@@ -46,18 +68,53 @@ class HojaDeRutaInline(admin.TabularInline):
 class HojaDeRutaAdmin(admin.ModelAdmin):
     list_display = (
         'clave_rutina',
+        'sumatoria_tiempo_pasos',
+        
         'nombre',
-        'descripcion',
+        
         'intervalo',
+        'get_subsistema',
         'sistema',
-        'sumatoria_tiempo_pasos'
+        'ordenamiento',
+        
+        
     )
-    search_fields = ('nombre', 'descripcion')
-    list_filter = (SistemaPrincipalFilter, 'intervalo', 'sistema',)
-    ordering = ('nombre',)
-    inlines = [PasosHojaDeRutaInline]  # Inline para crear/editar pasos directamente
-    group_by = 'sistema'
+    search_fields = ('nombre',)
+    # Filtros correctos: se filtra por 'sistema', luego por 'sistema__principal' y 'intervalo'
+    list_filter = (
+        SistemaPrincipalFilter,
+        SistemaFilter,
+        'intervalo',
+        
+    )
 
+    ordering = ('sistema__principal', 'sistema','ordenamiento',)
+    
+    def get_subsistema(self, obj):
+        """
+        Devuelve el subsistema (el valor de 'principal' del sistema)
+        o None si no existe.
+        """
+        if obj.sistema and obj.sistema.principal:
+            return obj.sistema.principal
+        return None
+    get_subsistema.short_description = 'Subsistema'
+    get_subsistema.admin_order_field = 'sistema__principal'
+    
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)  # Asegúrate de que este archivo CSS existe en tu carpeta estática
+        }
+
+    inlines = [PasosHojaDeRutaInline]  # Inline para crear/editar pasos directamente
+    
+
+
+
+
+  
+
+ 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "areas":
             kwargs["queryset"] = Area.objects.filter(principal=None)

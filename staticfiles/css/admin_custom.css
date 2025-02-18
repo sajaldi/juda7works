@@ -1,0 +1,23 @@
+/* admin_custom.css */
+th.column-clave_rutina {
+    background-color: #f0f0f0;  /* Fondo gris claro para el encabezado */
+    font-weight: bold;          /* Negrita en el encabezado */
+    color: #333;                /* Color de texto */
+}
+
+td.field-clave_rutina {
+    color: #007bff;  /* Color azul para el texto de la columna */
+    font-size: 14px;  /* Tamaño de fuente más pequeño */
+    font-weight: normal; /* Peso de fuente normal */
+    text-align: center; /* Centrar el texto */
+}
+
+td.field-clave_rutina a {
+    color: #007bff; /* Color azul para los enlaces */
+    text-decoration: none; /* Quitar subrayado */
+}
+
+td.field-clave_rutina a:hover {
+    text-decoration: underline; /* Subrayar el enlace cuando el mouse pase por encima */
+    color: #0056b3;  /* Color azul más oscuro en hover */
+}

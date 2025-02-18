@@ -1,0 +1,365 @@
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vista Anual Filtrada</title>
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(to right, #e0eafc, #cfdef3);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #222;
+            margin-bottom: 20px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        form {
+            text-align: center;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeIn 1s 0.5s ease-out forwards;
+        }
+
+        label {
+            margin: 0 10px;
+        }
+
+        select, button {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #vista-anual {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeInUp 1s 0.8s ease-out forwards;
+        }
+
+        #vista-anual thead tr {
+            background-color: #007bff;
+            color: white;
+            text-align: left;
+        }
+
+        #vista-anual th, #vista-anual td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        #vista-anual tbody tr:nth-child(even) {
+            background-color: #f3f3f3;
+        }
+
+        #vista-anual tbody tr:hover {
+            background-color: #eaeaea;
+        }
+
+        .semana-actual {
+            background-color: #cce5ff;
+        }
+
+        .droppable {
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .droppable:hover {
+            background-color: #e0f7fa;
+        }
+
+        .month-container {
+            display: flex;
+            position: relative; /* Establecer el contexto de posicionamiento para month-container */
+            width: 100%;
+            overflow-x: auto; /* Añadido para permitir el desplazamiento horizontal si es necesario */
+            margin-bottom: 10px; /* Espacio debajo de los meses */
+        }
+
+        .month-spacer {
+            width: 250px; /* Ancho del espacio en blanco inicial */
+            flex-shrink: 0; /* Evita que el espaciador se reduzca */
+        }
+
+        .month-marker {
+            position: absolute; /* Posicionamiento absoluto dentro de month-container */
+            bottom: 0; /* Alineado en la parte inferior del contenedor de meses */
+            height: 5px; /* Altura de la línea */
+            background-color: #007bff; /* Color de la línea */
+            pointer-events: none; /* Asegura que la línea no interfiere con los eventos del ratón */
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%; /* Could be more or less, depending on screen size */
+            border-radius: 10px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Vista Anual - {{ year }}</h1>
+
+    <form method="get">
+        <label for="area">Área:</label>
+        <select name="area" id="area">
+            <option value="">Todas las áreas</option>
+            {% for area in areas %}
+                <option value="{{ area.id }}" {% if area.id == area_seleccionada_id %}selected{% endif %}>
+                    {{ area.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="sistema_principal">Sistema Principal:</label>
+        <select name="sistema_principal" id="sistema_principal">
+            <option value="">Todos los sistemas principales</option>
+            {% for sistema_principal in sistemas_principales %}
+                <option value="{{ sistema_principal.id }}" {% if sistema_principal.id == sistema_principal_seleccionado_id %}selected{% endif %}>
+                    {{ sistema_principal.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Filtrar</button>
+    </form>
+
+    <div class="month-container" id="month-container">
+        <div class="month-spacer"></div>
+    </div>
+
+    <table id="vista-anual">
+        <thead>
+            <tr>
+                <th>Sistema Principal</th>
+                <th>Sistema</th>
+                <th>Hoja de Ruta</th>
+                <th>Horario</th>
+                {% for week_num, start_date, end_date in semanas %}
+                    <th class="{% if week_num == semana_actual %}semana-actual{% endif %}">
+                        Semana {{ week_num }}
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for sistema_principal, sistemas in ordenes_por_sistema.items %}
+                {% for sistema, hojas_de_ruta in sistemas.items %}
+                    {% for hoja_de_ruta, data in hojas_de_ruta.items %}
+                        <tr>
+                            <td>{{ sistema_principal }}</td>
+                            <td>{{ sistema }}</td>
+                            <td>{{ hoja_de_ruta }}</td>
+                            <td>{{ data.horario }}</td>
+
+                            
+                            {% for week_num, start_date, end_date in semanas %}
+                            <td id="cell-{{ sistema_principal|slugify }}-{{ sistema|slugify }}-{{ hoja_de_ruta|slugify }}-{{ week_num }}"
+                            class="droppable {% if week_num == semana_actual %}semana-actual{% endif %}"
+                            onclick="mostrarOrdenes('{{ sistema_principal|escapejs }}', '{{ sistema|escapejs }}', '{{ hoja_de_ruta|escapejs }}', {{ week_num }})">
+                            
+                            
+                            {% for key, value in niveles_por_semana.items %}
+                            Clave: {{ key }} - Valor: {{ value }}
+                            {% endfor %}
+                            {% with key_string=sistema_principal|add:","|add:sistema|add:","|add:hoja_de_ruta|add:","|add:week_num %}
+                            Clave Generada: {{ key_string }}
+                            {% endwith %}
+
+
+                        
+                        </td>
+                        
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div id="ordersModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2>Órdenes Asociadas</h2>
+            <div id="ordersContent"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const monthContainer = document.getElementById('month-container');
+            const tableHeader = document.querySelector('#vista-anual thead tr');
+            const spacer = document.querySelector('.month-spacer');
+            let currentMonth = null;
+            let monthStartPos = spacer.offsetWidth; //Posición inicial después del espaciador
+
+            const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const weekHeaderCells = Array.from(tableHeader.querySelectorAll('th')).slice(4); // Ajuste para empezar desde la quinta columna
+
+            weekHeaderCells.forEach((weekCell, index) => {
+                const weekNum = parseInt(weekCell.textContent.split(' ')[1]);
+                const monthIndex = getMonthForWeek(weekNum); // Asumiendo que getMonthForWeek es accesible globalmente o definida aquí
+
+                if (monthIndex !== currentMonth) {
+                    currentMonth = monthIndex;
+                    if (monthIndex !== null) {
+                        const monthDiv = document.createElement('div');
+                        monthDiv.textContent = monthNames[monthIndex];
+                        monthDiv.classList.add('month-label');
+                        monthContainer.appendChild(monthDiv);
+
+                        monthDiv.style.left = `${monthStartPos}px`; // Posicionar el mes
+                        monthStartPos += weekCell.offsetWidth; // Preparar para el siguiente mes
+                    } else {
+                        monthStartPos += weekCell.offsetWidth;
+                    }
+                } else if (monthIndex !== null) {
+                    monthStartPos += weekCell.offsetWidth;
+                }
+            });
+
+
+            function getMonthForWeek(weekNum) {
+                let baseDate = new Date(new Date().getFullYear(), 0, 1); // 1 de enero del año actual
+                let dayOfYear = (1 + (weekNum - 1) * 7); // Día del año para el inicio de la semana
+                baseDate.setDate(dayOfYear);
+                return baseDate.getMonth(); // Devuelve el índice del mes (0 para enero, 1 para febrero, etc.)
+            }
+        });
+
+        // Funcionalidad del Modal (COMPLETA AQUÍ)
+        function mostrarOrdenes(sistema_principal, sistema, hoja_de_ruta, semana) {
+            const url = `/cmms/obtener_ordenes/`;
+            const params = new URLSearchParams({
+                sistema_principal: sistema_principal,
+                sistema: sistema,
+                hoja_de_ruta: hoja_de_ruta,
+                semana: semana,
+            });
+
+            fetch(`${url}?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    const modal = document.getElementById("ordersModal");
+                    const ordersContent = document.getElementById("ordersContent");
+
+                    if (data.ordenes.length > 0) {
+                        let html = '<ul>';
+                        data.ordenes.forEach(orden => {
+                            html += `<li style="margin-bottom: 10px;">
+                                        <strong>${orden.nombre}</strong><br>
+                                        Fecha de inicio: ${orden.fechaDeInicio}<br>
+                                        Fecha de fin: ${orden.fechaDeFin}<br>
+                                        Área: ${orden.area}
+                                    </li>`;
+                        });
+                        html += '</ul>';
+                        ordersContent.innerHTML = html;
+                    } else {
+                        ordersContent.innerHTML = '<p>No hay órdenes para esta semana.</p>';
+                    }
+
+                    modal.style.display = "block";
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function cerrarModal() {
+            document.getElementById("ordersModal").style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById("ordersModal");
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -27,7 +27,7 @@ def importar_sistemas_view(request):
                 df = pd.read_excel(archivo, dtype=str, keep_default_na=False)
 
             df.columns = [col.strip().lower() for col in df.columns]
-            columnas_requeridas = ['id', 'nombre', 'principal']  # Asegúrate de que la columna ID esté presente
+            columnas_requeridas = ['id', 'nombre', 'principal', ]  # Asegúrate de que la columna ID esté presente
 
             if not all(col in df.columns for col in columnas_requeridas):
                 messages.error(request, "Faltan columnas. Use la plantilla.")

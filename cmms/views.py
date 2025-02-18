@@ -6,6 +6,8 @@ from django.shortcuts import redirect, render
 import datetime
 from openpyxl import Workbook, load_workbook
 import openpyxl
+
+from .forms import ProgramacionForm
 from .models import Activo, HojaDeRuta, OrdenDeTrabajo, PasosHojaDeRuta, Sistema, Area
 import logging
 
@@ -103,6 +105,104 @@ def vista_anual(request):
         'months': months,  # Add months to context
     }
     return render(request, 'cmms/vista_anual.html', context)
+
+
+def vista_anual_filtrada(request):
+    """
+    Vista para mostrar un calendario anual de órdenes de trabajo, filtrado por área y sistema principal.
+    """
+    year = datetime.now().year
+    months = [
+        (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
+        (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
+        (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
+    ]
+    areas = Area.objects.all()
+    sistemas_principales = Sistema.objects.filter(principal__isnull=True)
+
+    area_seleccionada_id = request.GET.get('area')
+    sistema_principal_seleccionado_id = request.GET.get('sistema_principal')
+
+    ordenes = OrdenDeTrabajo.objects.filter(fechaDeInicio__year=year)
+
+    if area_seleccionada_id:
+        ordenes = ordenes.filter(area_id=area_seleccionada_id)
+    if sistema_principal_seleccionado_id:
+        ordenes = ordenes.filter(HojaDeRuta__sistema__principal_id=sistema_principal_seleccionado_id)
+
+    # *** COPIA Y ADAPTA LA LÓGICA DE vista_anual ***
+    semanas = []
+    start_date = datetime(year, 1, 1)
+    while start_date.weekday() != 0:
+        start_date += timedelta(days=1)
+    for week_num in range(1, 53):
+        end_date = start_date + timedelta(days=6)
+        semanas.append((week_num, start_date, end_date))
+        start_date = end_date + timedelta(days=1)
+
+    fecha_actual = datetime.now()
+    semana_actual = None
+    for week_num, start_date, end_date in semanas:
+        if start_date <= fecha_actual <= end_date:
+            semana_actual = week_num
+            break
+
+    ordenes_por_sistema = {}
+    for orden in ordenes:
+        sistema = orden.HojaDeRuta.sistema
+        sistema_principal = sistema.principal if sistema.principal else "Sin Sistema Principal"
+        hoja_de_ruta = orden.HojaDeRuta.nombre
+        programacion = orden.programacion
+        horario = orden.horario if programacion else None
+        color = orden.HojaDeRuta.intervalo.color
+
+        if sistema_principal not in ordenes_por_sistema:
+            ordenes_por_sistema[sistema_principal] = {}
+        if sistema not in ordenes_por_sistema[sistema_principal]:
+            ordenes_por_sistema[sistema_principal][sistema] = {}
+        if hoja_de_ruta not in ordenes_por_sistema[sistema_principal][sistema]:
+            ordenes_por_sistema[sistema_principal][sistema][hoja_de_ruta] = {
+                'horario': horario,
+                'color': color,
+                'semanas': {week_num: [] for week_num in range(1, 53)}
+            }
+        for week_num, start_date, end_date in semanas:
+            fecha_inicio_sin_tz = orden.fechaDeInicio.replace(tzinfo=None)
+            if start_date <= fecha_inicio_sin_tz <= end_date:
+                ordenes_por_sistema[sistema_principal][sistema][hoja_de_ruta]['semanas'][week_num].append(orden)
+                break
+
+    niveles_por_semana = {}
+    for sistema_principal, sistemas in ordenes_por_sistema.items():
+        for sistema, hojas_de_ruta in sistemas.items():
+            for hoja_de_ruta, data in hojas_de_ruta.items():
+                for week_num, ordenes in data['semanas'].items():
+                    if ordenes:
+                        niveles = [orden.area.nombre if orden.area else "Área no definida" for orden in ordenes]
+                        key = f"{sistema_principal},{sistema},{hoja_de_ruta},{week_num}"
+                        niveles_por_semana[key] = {
+                            'niveles': f"{niveles[0]}-{niveles[-1]}",
+                            'color': data['color']
+                        }
+                        logger.debug(f"Semana {week_num}: {niveles_por_semana[key]}")
+
+
+    # *** FIN DE LA COPIA Y ADAPTACIÓN ***
+
+    context = {
+        'year': year,
+        'semanas': semanas,
+        'ordenes_por_sistema': ordenes_por_sistema,
+        'niveles_por_semana': niveles_por_semana,
+        'semana_actual': semana_actual,
+        'areas': areas,
+        'months': months,
+        'sistemas_principales': sistemas_principales,
+        'area_seleccionada_id': area_seleccionada_id,
+        'sistema_principal_seleccionado_id': sistema_principal_seleccionado_id,
+    }
+    return render(request, 'cmms/vista_anual_filtrada.html', context)
+
 
 
 def obtener_ordenes(request):
@@ -358,23 +458,43 @@ def vista_activos_por_dia(request, fecha_inicio):
 
 def exportar_pasos_hoja_de_ruta(request):
     # Crear un nuevo libro de trabajo y hoja
+     # Crear un nuevo libro de trabajo y hoja
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Pasos de Hoja de Ruta"
 
-    # Encabezados
-    encabezados = ["ID", "Paso", "Tiempo (min)", "Hoja de Ruta"]
-    ws.append(encabezados)
+    # Encabezados con formato en negrita
+    encabezados = ["ID", "Paso", "Tiempo (min)", "Hoja de Ruta",  "Sistema Principal", "Sistema","ordenamiento","frecuencia"]
 
-    # Obtener datos y agregarlos a la hoja
-    for paso in PasosHojaDeRuta.objects.all():
-        ws.append([paso.id, paso.paso, paso.tiempo, paso.hojaderuta.nombre])
+
+    ws.append(encabezados)
+    for cell in ws[1]:
+        cell.font = openpyxl.styles.Font(bold=True)
+
+    # Obtener datos optimizando la consulta
+    for paso in PasosHojaDeRuta.objects.select_related('hojaderuta').all():
+        sistema_principal = paso.hojaderuta.sistema.principal.nombre if paso.hojaderuta.sistema and paso.hojaderuta.sistema.principal else "N/A"
+        sistema = paso.hojaderuta.sistema.nombre if paso.hojaderuta.sistema else "N/A"
+        ordenamiento = paso.hojaderuta.ordenamiento if paso.hojaderuta.ordenamiento else 0
+        frecuencia = str(paso.hojaderuta.intervalo) if paso.hojaderuta.intervalo else "N/A"
+
+
+        ws.append([paso.id, paso.paso, paso.tiempo, paso.hojaderuta.nombre, sistema_principal, sistema, ordenamiento,frecuencia])
+
+    # Ajustar ancho de columnas
+    for column_cells in ws.columns:
+        length = max(len(str(cell.value)) for cell in column_cells)
+        ws.column_dimensions[column_cells[0].column_letter].width = length + 2
 
     # Configurar respuesta HTTP
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     response["Content-Disposition"] = 'attachment; filename="PasosHojaDeRuta.xlsx"'
     
-    wb.save(response)
+    try:
+        wb.save(response)
+    except Exception as e:
+        return HttpResponse(f"Error al generar el archivo: {e}")
+
     return response
 
 import openpyxl
@@ -402,12 +522,13 @@ def importar_pasos_hoja_de_ruta(request):
         for i, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):  # Saltamos encabezados
             print(f"Fila {i}: {row}")  # 🔍 Depuración: ver qué datos está leyendo
 
-            # Validar que la fila tenga exactamente 4 columnas (ahora incluye ID)
-            if row is None or len(row) != 4:
-                errores.append(f"Fila {i}: Número incorrecto de columnas ({len(row) if row else 0}). Se esperaban 4 (ID, Paso, Tiempo, Hoja de Ruta).")
+            # Tomar solo las primeras 4 columnas (ID, Paso, Tiempo, Hoja de Ruta)
+            datos = row[:4]  # Esto ignora las columnas extra
+            if len(datos) < 4:
+                errores.append(f"Fila {i}: Número incorrecto de columnas ({len(datos)}). Se esperaban al menos 4 (ID, Paso, Tiempo, Hoja de Ruta).")
                 continue
 
-            paso_id, paso_nombre, tiempo, hoja_de_ruta_nombre = row
+            paso_id, paso_nombre, tiempo, hoja_de_ruta_nombre = datos
 
             # Si el paso a importar tiene la palabra "ELIMINAR", intentamos eliminarlo
             if str(paso_nombre).strip().upper() == "ELIMINAR":
@@ -451,7 +572,6 @@ def importar_pasos_hoja_de_ruta(request):
                     print(f"Fila {i}: Paso con ID '{paso_id}' creado.")
                 else:
                     print(f"Fila {i}: Paso con ID '{paso_id}' actualizado.")
-
             except Exception as e:
                 errores.append(f"Fila {i}: Error al guardar/actualizar en la base de datos para ID '{paso_id}' ({str(e)}).")
 
@@ -464,7 +584,6 @@ def importar_pasos_hoja_de_ruta(request):
         return redirect("importar_pasos")  # Ajusta según tu vista de redirección
 
     return render(request, "cmms/importar_pasos.html")
-
 
 
 
@@ -540,3 +659,18 @@ from .models import MenuItem
 def menu_view(request):
     dynamic_menu_items = MenuItem.objects.all().order_by('order')
     return render(request, 'nombre_de_tu_template.html', {'dynamic_menu_items': dynamic_menu_items})
+
+
+
+def programacion_view(request):
+    if request.method == 'POST':
+        form = ProgramacionForm(request.POST)
+        if form.is_valid():
+            form.save()
+            # Redirigir o hacer alguna acción después de guardar
+    else:
+        form = ProgramacionForm()
+
+    return render(request, 'cmms/programacion_form.html', {'form': form})
+
+

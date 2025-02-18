@@ -12,7 +12,7 @@ def exportar_plantilla_hojaderuta(request):
     ws.title = "Plantilla de Exportación de HojaDeRuta"
 
     # Agregar encabezados
-    headers = ["ID","clave_rutina", "Nombre", "Descripción", "Intervalo", "Sistema"]
+    headers = ["ID","clave_rutina", "Nombre", "Descripción", "Intervalo", "Sistema", "Ordenamiento"]
     ws.append(headers)
 
     # Obtener los datos del modelo HojaDeRuta
@@ -20,7 +20,7 @@ def exportar_plantilla_hojaderuta(request):
     for hoja in hojas_de_ruta:
         intervalo_nombre = hoja.intervalo.nombre if hoja.intervalo else ''
         sistema_nombre = hoja.sistema.nombre if hoja.sistema else ''
-        ws.append([hoja.id, hoja.clave_rutina, hoja.nombre, hoja.descripcion, intervalo_nombre, sistema_nombre])
+        ws.append([hoja.id, hoja.clave_rutina, hoja.nombre, hoja.descripcion, intervalo_nombre, sistema_nombre, hoja.ordenamiento])
 
     # Configurar la respuesta HTTP
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -43,7 +43,7 @@ def importar_plantilla_hojaderuta(request):
         # Leer los datos del archivo Excel
         for row in ws.iter_rows(min_row=2, values_only=True):
             try:
-                hoja_id, clave_rutina, nombre, descripcion, intervalo_nombre, sistema_nombre = row
+                hoja_id, clave_rutina, nombre, descripcion, intervalo_nombre, sistema_nombre, hoja_ordenamiento = row
 
                 # Verificar si hoja_id es None
                 if hoja_id is None:
@@ -72,7 +72,8 @@ def importar_plantilla_hojaderuta(request):
                         'nombre': nombre.strip() if nombre else None, # Añadido strip() y manejo de None
                         'descripcion': descripcion.strip() if descripcion else None, # Añadido strip() y manejo de None
                         'intervalo': intervalo,
-                        'sistema': sistema
+                        'sistema': sistema,
+                        'ordenamiento': hoja_ordenamiento.strip() if isinstance(hoja_ordenamiento, str) else hoja_ordenamiento, # Solo aplica strip() si es una cadena
                     }
                 )
                 importados += 1

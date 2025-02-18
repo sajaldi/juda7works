@@ -151,7 +151,8 @@ def generar_ordenes(modeladmin, request, queryset):
                         horario=horario,
                         fechaDeInicio=hora_actual,
                         fechaDeFin=hora_actual + timedelta(minutes=duracion_total_pasos),
-                        area=area
+                        area=area,
+                        programacion=programacion
                     )
                     ordenes_creadas.append(orden)
                 except Exception as e:
@@ -204,7 +205,8 @@ def generar_ordenes_por_activo(modeladmin, request, queryset):
         hoja_de_ruta = programacion.HojaDeRuta
         print(f"Hoja de ruta: {hoja_de_ruta.nombre}")
         
-        horario = hoja_de_ruta.horario if hasattr(hoja_de_ruta, 'horario') else None
+        # Obtener el horario de una relación separada de la programación
+        horario = programacion.horario  # Asumiendo que hay una relación directa con horario
         frecuencia = hoja_de_ruta.intervalo if hasattr(hoja_de_ruta, 'intervalo') else None
 
         if not horario:
@@ -321,7 +323,6 @@ def generar_ordenes_por_activo(modeladmin, request, queryset):
 
 generar_ordenes_por_activo.short_description = "Generar órdenes de trabajo por activo"
 
-
 def eliminar_ordenes(modeladmin, request, queryset):
     ordenes_eliminadas = []
     for programacion in queryset:
@@ -355,7 +356,7 @@ class ActivoInline(admin.TabularInline):
 class ProgramacionAdmin(admin.ModelAdmin):
     form = ProgramacionForm
     list_display = ('nombre', 'fechaDeInicio', 'programado','horario')
-    list_editable = ('fechaDeInicio',)
+    list_editable = ('fechaDeInicio','programado','horario')
     list_filter = ('programado', 'fechaDeInicio', 'activos__modelo__categoria')  # ✅ Filtro correcto
     actions = [generar_ordenes, generar_ordenes_por_activo, eliminar_ordenes]
     search_fields = ('nombre', 'fechaDeInicio')

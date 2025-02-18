@@ -1,0 +1,15 @@
+<form method="POST">
+    {% csrf_token %}
+    
+    <div class="form-group">
+      <label for="{{ form.busqueda_horario.id_for_label }}">Buscar Horario:</label>
+      {{ form.busqueda_horario }}
+    </div>
+  
+    <div class="form-group">
+      <label for="{{ form.horario.id_for_label }}">Horario:</label>
+      {{ form.horario }}
+    </div>
+  
+    <button type="submit" class="btn btn-primary">Enviar</button>
+  </form>

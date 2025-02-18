@@ -12,14 +12,15 @@ from views.herramientas_view import exportar_plantilla_herramientas, importar_he
  
 from .acciones import exportar_plantilla_activos, exportar_plantilla_pasos, importar_activos_view
 from views.hoja_de_ruta_views import exportar_plantilla_hojaderuta, importar_plantilla_hojaderuta
-from .views import exportar_pasos_hoja_de_ruta, get_activos_por_categoria, importar_pasos_hoja_de_ruta, menu, obtener_ordenes, ordenes_por_fecha, vista_activos_por_dia, vista_anual, vista_mensual, plantilla_sistema, vista_activos
+from .views import exportar_pasos_hoja_de_ruta, get_activos_por_categoria, importar_pasos_hoja_de_ruta, menu, obtener_ordenes, ordenes_por_fecha, programacion_view, vista_activos_por_dia, vista_anual, vista_anual_filtrada, vista_mensual, plantilla_sistema, vista_activos
 
 
 urlpatterns = [
     ## URLS de la aplicación CMMS
     ## Plantilla de Vista anual
     path('vista_anual/', vista_anual, name='vista_anual'), # Asocia la vista a la URL de Vista Anual
-    path('vista_mensual/<str:fecha_inicio>/', vista_mensual, name='vista_mensual'), # Asocia la vista a la URL de Vista Mensual
+    path('vista_mensual/<str:fecha_inicio>/', vista_mensual, name='vista_mensual'),
+     path('vista_anual_filtrada/', vista_anual_filtrada, name='vista_anual_filtrada'), # Asocia la vista a la URL de Vista Mensual
     # Activos
     path("exportar-plantilla/",exportar_plantilla_activos, name="exportar_plantilla"),  #
     path("importar-activos/", importar_activos_view, name="importar_activos"),
@@ -49,5 +50,6 @@ urlpatterns = [
     path('exportar_area', exportar_plantilla_areas, name='exportar_plantilla_areas'),
     path('importar_areas', importar_areas_view, name='importar_areas'),
 path('gestionar_puestos/', gestionar_puestos, name='gestionar_puestos'),
+ path('programacion/', programacion_view, name='programacion_form'),
    
 ]
