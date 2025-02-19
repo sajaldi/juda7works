@@ -21,6 +21,9 @@ class ProgramacionForm(forms.ModelForm):
     class Meta:
         model = Programacion
         fields = ['nombre', 'HojaDeRuta', 'fechaDeInicio', 'fecha_final', 'areas', 'activos', 'horario']
+        widgets = {
+            'areas': forms.CheckboxSelectMultiple, # Widget de checkboxes para selección múltiple
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -362,5 +362,5 @@ class ProgramacionAdmin(admin.ModelAdmin):
     search_fields = ('nombre', 'fechaDeInicio')
     
     # Agregar filtro horizontal para activos
-    filter_horizontal = ('activos',)
-    
+    filter_horizontal = ('areas','activos',)
+  
