@@ -35,3 +35,15 @@ class ProgramacionForm(forms.ModelForm):
         # Si hay un horario previamente seleccionado, no hacer cambios
         elif 'horario' in self.initial:
             horario = self.initial['horario']
+
+from django.apps import apps
+class ImportForm(forms.Form):
+    """Formulario para la importación de datos desde Excel."""
+    model_choices = [(model.__name__, model.__name__) for model in apps.get_app_config('cmms').get_models()]
+    model = forms.ChoiceField(choices=model_choices, label="Seleccionar modelo")
+    file = forms.FileField(label="Archivo Excel")
+
+class ExportForm(forms.Form):
+    """Formulario para la exportación de datos a Excel."""
+    model_choices = [(model.__name__, model.__name__) for model in apps.get_app_config('cmms').get_models()]
+    model = forms.ChoiceField(choices=model_choices, label="Seleccionar modelo")

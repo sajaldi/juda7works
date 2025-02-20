@@ -12,7 +12,7 @@ from views.herramientas_view import exportar_plantilla_herramientas, importar_he
  
 from .acciones import exportar_plantilla_activos, exportar_plantilla_pasos, importar_activos_view
 from views.hoja_de_ruta_views import exportar_plantilla_hojaderuta, importar_plantilla_hojaderuta
-from .views import exportar_pasos_hoja_de_ruta, get_activos_por_categoria, importar_pasos_hoja_de_ruta, menu, obtener_ordenes, ordenes_por_fecha, programacion_view, vista_activos_por_dia, vista_anual, vista_anual_filtrada, vista_mensual, plantilla_sistema, vista_activos
+from .views import  import_view, export_view, exportar_pasos_hoja_de_ruta, get_activos_por_categoria, importar_pasos_hoja_de_ruta, menu, obtener_ordenes, ordenes_por_fecha, programacion_view, vista_activos_por_dia, vista_anual, vista_anual_filtrada, vista_mensual, plantilla_sistema, vista_activos
 
 
 urlpatterns = [
@@ -51,5 +51,7 @@ urlpatterns = [
     path('importar_areas', importar_areas_view, name='importar_areas'),
 path('gestionar_puestos/', gestionar_puestos, name='gestionar_puestos'),
  path('programacion/', programacion_view, name='programacion_form'),
+     path("export/", export_view, name="export_excel"),
+    path("import/", import_view, name="import_excel"),
    
 ]

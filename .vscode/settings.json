@@ -1,5 +1,10 @@
 {
     "python.analysis.extraPaths": [
         "./cmms"
-    ]
+    ],
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#00351F",
+        "titleBar.activeBackground": "#004B2B",
+        "titleBar.activeForeground": "#E8FFF6"
+    }
 }

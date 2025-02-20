@@ -673,4 +673,43 @@ def programacion_view(request):
 
     return render(request, 'cmms/programacion_form.html', {'form': form})
 
+from .forms import ImportForm, ExportForm
+from .utils import import_from_excel, export_to_excel  # Asegúrate de que estas funciones estén importadas
 
+def import_view(request):
+    if request.method == 'POST' and request.FILES['file']:
+        form = ImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            model_name = form.cleaned_data['model']
+            file = request.FILES['file']
+            file_path = f"media/{file.name}"
+            
+            # Guardamos el archivo en el sistema de archivos
+            with open(file_path, 'wb') as f:
+                for chunk in file.chunks():
+                    f.write(chunk)
+            
+            try:
+                message = import_from_excel(model_name, file_path)
+                messages.success(request, message)
+            except Exception as e:
+                messages.error(request, f"Error al importar: {str(e)}")
+    else:
+        form = ImportForm()
+
+    return render(request, 'import.html', {'form': form})
+
+def export_view(request):
+    if request.method == 'POST':
+        form = ExportForm(request.POST)
+        if form.is_valid():
+            model_name = form.cleaned_data['model']
+            file_path = export_to_excel(model_name)
+            with open(file_path, 'rb') as file:
+                response = HttpResponse(file.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = f'attachment; filename={model_name}_export.xlsx'
+                return response
+    else:
+        form = ExportForm()
+
+    return render(request, 'export.html', {'form': form})
